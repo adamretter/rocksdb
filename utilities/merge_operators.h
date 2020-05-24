@@ -17,6 +17,7 @@ class MergeOperators {
  public:
   static std::shared_ptr<MergeOperator> CreatePutOperator();
   static std::shared_ptr<MergeOperator> CreateDeprecatedPutOperator();
+  static std::shared_ptr<MergeOperator> CreateInt64AddOperator();
   static std::shared_ptr<MergeOperator> CreateUInt64AddOperator();
   static std::shared_ptr<MergeOperator> CreateStringAppendOperator();
   static std::shared_ptr<MergeOperator> CreateStringAppendOperator(char delim_char);
@@ -33,7 +34,9 @@ class MergeOperators {
       return CreatePutOperator();
     } else if (name == "put_v1") {
       return CreateDeprecatedPutOperator();
-    } else if ( name == "uint64add") {
+    } else if (name == "int64add") {
+      return CreateInt64AddOperator();
+    } else if (name == "uint64add") {
       return CreateUInt64AddOperator();
     } else if (name == "stringappend") {
       return CreateStringAppendOperator();

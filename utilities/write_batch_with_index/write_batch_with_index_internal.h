@@ -36,15 +36,14 @@ class BaseDeltaIterator : public Iterator {
   BaseDeltaIterator(Iterator* base_iterator, WBWIIterator* delta_iterator,
                     const Comparator* comparator,
                     const ReadOptions* read_options = nullptr)
-      : forward_(true),
+      : progress_(Progress::TO_BE_DETERMINED),
         current_at_base_(true),
         equal_keys_(false),
         status_(Status::OK()),
         base_iterator_(base_iterator),
         delta_iterator_(delta_iterator),
         comparator_(comparator),
-        iterate_upper_bound_(read_options ? read_options->iterate_upper_bound
-                                          : nullptr) {}
+        read_options_(read_options) {}
 
   ~BaseDeltaIterator() override {}
 
@@ -54,28 +53,68 @@ class BaseDeltaIterator : public Iterator {
   }
 
   void SeekToFirst() override {
-    forward_ = true;
+    progress_ = Progress::SEEK_TO_FIRST;
     base_iterator_->SeekToFirst();
     delta_iterator_->SeekToFirst();
     UpdateCurrent();
   }
 
   void SeekToLast() override {
-    forward_ = false;
-    base_iterator_->SeekToLast();
-    delta_iterator_->SeekToLast();
+    progress_ = Progress::SEEK_TO_LAST;
+
+    // is there an upper bound constraint on base_iterator_?
+    const Slice* base_upper_bound = base_iterator_upper_bound();
+    if (base_upper_bound != nullptr) {
+      // yes, and is base_iterator already constrained by an upper_bound?
+      if (!base_iterator_->ChecksUpperBound()) {
+        // no, so we have to seek it to before base_upper_bound
+        base_iterator_->Seek(*(base_upper_bound));
+        if (base_iterator_->Valid()) {
+          base_iterator_->Prev();  // upper bound should be exclusive!
+        } else {
+          // the base_upper_bound is beyond the base_iterator, so just
+          // SeekToLast()
+          base_iterator_->SeekToLast();
+        }
+      } else {
+        // yes, so the base_iterator will take care of base_upper_bound
+        base_iterator_->SeekToLast();
+      }
+    } else {
+      // no upper cound constraint, so just SeekToLast
+      base_iterator_->SeekToLast();
+    }
+
+    // is there an upper bound constraint on delta_iterator_?
+    if (read_options_ != nullptr &&
+        read_options_->iterate_upper_bound != nullptr) {
+      // delta iterator does not itself support iterate_upper_bound,
+      // so we have to seek it to before iterate_upper_bound
+      delta_iterator_->Seek(*(read_options_->iterate_upper_bound));
+      if (delta_iterator_->Valid()) {
+        delta_iterator_->Prev();  // upper bound should be exclusive!
+      } else {
+        // the upper_bound is beyond the delta_iterator, so just SeekToLast()
+        delta_iterator_->SeekToLast();
+      }
+
+    } else {
+      // no upper bound constraint, so just SeekToLast
+      delta_iterator_->SeekToLast();
+    }
+
     UpdateCurrent();
   }
 
   void Seek(const Slice& k) override {
-    forward_ = true;
+    progress_ = Progress::SEEK;
     base_iterator_->Seek(k);
     delta_iterator_->Seek(k);
     UpdateCurrent();
   }
 
   void SeekForPrev(const Slice& k) override {
-    forward_ = false;
+    progress_ = Progress::SEEK_FOR_PREV;
     base_iterator_->SeekForPrev(k);
     delta_iterator_->SeekForPrev(k);
     UpdateCurrent();
@@ -87,33 +126,44 @@ class BaseDeltaIterator : public Iterator {
       return;
     }
 
-    if (!forward_) {
-      // Need to change direction
+    if (IsMovingBackward()) {
+      // currently moving backward, so we need to change direction
       // if our direction was backward and we're not equal, we have two states:
-      // * both iterators are valid: we're already in a good state (current
+      //     * both iterators are valid: we're already in a good state (current
       // shows to smaller)
-      // * only one iterator is valid: we need to advance that iterator
-      forward_ = true;
+      //     * only one iterator is valid: we need to advance that iterator
+
       equal_keys_ = false;
       if (!BaseValid()) {
         assert(DeltaValid());
-        base_iterator_->SeekToFirst();
+        if (progress_ != Progress::SEEK_TO_LAST) {
+          base_iterator_->SeekToFirst();
+        }
       } else if (!DeltaValid()) {
-        delta_iterator_->SeekToFirst();
-      } else if (current_at_base_) {
-        // Change delta from larger than base to smaller
-        AdvanceDelta();
+        if (progress_ != Progress::SEEK_TO_LAST) {
+          delta_iterator_->SeekToFirst();
+        }
       } else {
-        // Change base from larger than delta to smaller
-        AdvanceBase();
-      }
-      if (DeltaValid() && BaseValid()) {
-        if (comparator_->Equal(delta_iterator_->Entry().key,
-                               base_iterator_->key())) {
-          equal_keys_ = true;
+        progress_ = Progress::FORWARD;
+        if (current_at_base_) {
+          // Change delta from larger than base to smaller
+          AdvanceDelta();
+        } else {
+          // Change base from larger than delta to smaller
+          AdvanceBase();
+        }
+
+        if (DeltaValid() && BaseValid()) {
+          if (comparator_->Equal(delta_iterator_->Entry().key,
+                                 base_iterator_->key())) {
+            equal_keys_ = true;
+          }
         }
       }
     }
+
+    progress_ = Progress::FORWARD;
+
     Advance();
   }
 
@@ -123,26 +173,36 @@ class BaseDeltaIterator : public Iterator {
       return;
     }
 
-    if (forward_) {
-      // Need to change direction
-      // if our direction was backward and we're not equal, we have two states:
-      // * both iterators are valid: we're already in a good state (current
+    if (IsMovingForward()) {
+      // currently moving forward, so we need to change direction
+      // if our direction was forward and we're not equal, we have two states:
+      //     * both iterators are valid: we're already in a good state (current
       // shows to smaller)
-      // * only one iterator is valid: we need to advance that iterator
-      forward_ = false;
+      //     * only one iterator is valid: we need to advance that iterator
+
       equal_keys_ = false;
+
       if (!BaseValid()) {
         assert(DeltaValid());
-        base_iterator_->SeekToLast();
+        if (progress_ != Progress::SEEK_TO_FIRST) {
+          base_iterator_->SeekToLast();
+        }
       } else if (!DeltaValid()) {
-        delta_iterator_->SeekToLast();
-      } else if (current_at_base_) {
-        // Change delta from less advanced than base to more advanced
-        AdvanceDelta();
+        if (progress_ != Progress::SEEK_TO_FIRST) {
+          delta_iterator_->SeekToLast();
+        }
       } else {
-        // Change base from less advanced than delta to more advanced
-        AdvanceBase();
+        progress_ = Progress::BACKWARD;
+
+        if (current_at_base_) {
+          // Change delta from less advanced than base to more advanced
+          AdvanceDelta();
+        } else {
+          // Change base from less advanced than delta to more advanced
+          AdvanceBase();
+        }
       }
+
       if (DeltaValid() && BaseValid()) {
         if (comparator_->Equal(delta_iterator_->Entry().key,
                                base_iterator_->key())) {
@@ -150,6 +210,8 @@ class BaseDeltaIterator : public Iterator {
         }
       }
     }
+
+    progress_ = Progress::BACKWARD;
 
     Advance();
   }
@@ -172,6 +234,18 @@ class BaseDeltaIterator : public Iterator {
       return base_iterator_->status();
     }
     return delta_iterator_->status();
+  }
+
+  bool ChecksLowerBound() const override { return false; }
+
+  const Slice* lower_bound() const override {
+    return base_iterator_lower_bound();
+  }
+
+  bool ChecksUpperBound() const override { return true; }
+
+  const Slice* upper_bound() const override {
+    return base_iterator_upper_bound();
   }
 
   void Invalidate(Status s) { status_ = s; }
@@ -210,7 +284,7 @@ class BaseDeltaIterator : public Iterator {
            delta_iterator_->Entry().type != kLogDataRecord);
     int compare = comparator_->Compare(delta_iterator_->Entry().key,
                                        base_iterator_->key());
-    if (forward_) {
+    if (IsMovingForward()) {
       // current_at_base -> compare < 0
       assert(!current_at_base_ || compare < 0);
       // !current_at_base -> compare <= 0
@@ -244,21 +318,29 @@ class BaseDeltaIterator : public Iterator {
   }
 
   void AdvanceDelta() {
-    if (forward_) {
+    if (IsMovingForward()) {
       delta_iterator_->Next();
     } else {
       delta_iterator_->Prev();
     }
   }
   void AdvanceBase() {
-    if (forward_) {
+    if (IsMovingForward()) {
       base_iterator_->Next();
     } else {
       base_iterator_->Prev();
     }
   }
-  bool BaseValid() const { return base_iterator_->Valid(); }
-  bool DeltaValid() const { return delta_iterator_->Valid(); }
+  bool BaseValid() const {
+    // NOTE: we don't need the bounds check on
+    // base_iterator if the base iterator has an
+    // upper_bounds_check already
+    return base_iterator_->Valid() &&
+           (base_iterator_->ChecksUpperBound() ? true : BaseIsWithinBounds());
+  }
+  bool DeltaValid() const {
+    return delta_iterator_->Valid() && DeltaIsWithinBounds();
+  }
   void UpdateCurrent() {
 // Suppress false positive clang analyzer warnings.
 #ifndef __clang_analyzer__
@@ -273,7 +355,9 @@ class BaseDeltaIterator : public Iterator {
         current_at_base_ = false;
         return;
       }
+
       equal_keys_ = false;
+
       if (!BaseValid()) {
         if (!base_iterator_->status().ok()) {
           // Expose the error status and stop.
@@ -281,13 +365,16 @@ class BaseDeltaIterator : public Iterator {
           return;
         }
 
-        // Base has finished.
+        // Base and Delta have both finished.
         if (!DeltaValid()) {
           // Finished
           return;
         }
-        if (iterate_upper_bound_) {
-          if (comparator_->Compare(delta_entry.key, *iterate_upper_bound_) >=
+
+        if (read_options_ != nullptr &&
+            read_options_->iterate_upper_bound != nullptr) {
+          if (comparator_->Compare(delta_entry.key,
+                                   *(read_options_->iterate_upper_bound)) >=
               0) {
             // out of upper bound -> finished.
             return;
@@ -300,13 +387,17 @@ class BaseDeltaIterator : public Iterator {
           current_at_base_ = false;
           return;
         }
+
       } else if (!DeltaValid()) {
-        // Delta has finished.
+        // Base is unfinished, but Delta has finished.
         current_at_base_ = true;
         return;
+
       } else {
+        // Base and Delta are both unfinished.
+
         int compare =
-            (forward_ ? 1 : -1) *
+            (IsMovingForward() ? 1 : -1) *
             comparator_->Compare(delta_entry.key, base_iterator_->key());
         if (compare <= 0) {  // delta bigger or equal
           if (compare == 0) {
@@ -317,11 +408,13 @@ class BaseDeltaIterator : public Iterator {
             current_at_base_ = false;
             return;
           }
+
           // Delta is less advanced and is delete.
           AdvanceDelta();
           if (equal_keys_) {
             AdvanceBase();
           }
+
         } else {
           current_at_base_ = true;
           return;
@@ -333,14 +426,109 @@ class BaseDeltaIterator : public Iterator {
 #endif  // __clang_analyzer__
   }
 
-  bool forward_;
+  /**
+   * Returns the upper bound for the base iterator,
+   * or nullptr if there is no upper bound.
+   *
+   * The base iterator may have its own upper bound,
+   * if not not we use the upper bound from this
+   * iterator's ReadOptions (if present).
+   */
+  inline const Slice* base_iterator_upper_bound() const {
+    const Slice* upper = base_iterator_->upper_bound();
+    if (upper == nullptr && read_options_ != nullptr) {
+      return read_options_->iterate_upper_bound;
+    }
+    return upper;
+  }
+
+  /**
+   * Returns the lower bound for the base iterator,
+   * or nullptr if there is no lower bound.
+   *
+   * The base iterator may have its own lower bound,
+   * if not not we use the lower bound from this
+   * iterator's ReadOptions (if present).
+   */
+  inline const Slice* base_iterator_lower_bound() const {
+    const Slice* lower = base_iterator_->lower_bound();
+    if (lower == nullptr && read_options_ != nullptr) {
+      return read_options_->iterate_lower_bound;
+    }
+    return lower;
+  }
+
+  bool BaseIsWithinBounds() const {
+    if (IsMovingBackward()) {
+      const Slice* lower = base_iterator_lower_bound();
+      if (lower != nullptr) {
+        return comparator_->Compare(base_iterator_->key(), *lower) >= 0;
+      }
+    }
+
+    if (IsMovingForward()) {
+      const Slice* upper = base_iterator_upper_bound();
+      if (upper != nullptr) {
+        return comparator_->Compare(base_iterator_->key(), *upper) < 0;
+      }
+    }
+
+    return true;
+  }
+
+  bool DeltaIsWithinBounds() const {
+    if (read_options_ != nullptr) {
+      if (IsMovingBackward() && read_options_->iterate_lower_bound != nullptr) {
+        return comparator_->Compare(delta_iterator_->Entry().key,
+                                    *(read_options_->iterate_lower_bound)) >= 0;
+      }
+
+      if (IsMovingForward() && read_options_->iterate_upper_bound != nullptr) {
+        return comparator_->Compare(delta_iterator_->Entry().key,
+                                    *(read_options_->iterate_upper_bound)) < 0;
+      }
+    }
+    return true;
+  }
+
+  inline bool IsMovingForward() const { return progress_ < Progress::BACKWARD; }
+
+  inline bool IsMovingBackward() const { return progress_ > Progress::FORWARD; }
+
+  /**
+   * Indicates the progression of the BaseDeltaIterator.
+   *
+   * The numeric ordering of the enumerated values is
+   * important as it allows us to easily calculate
+   * whether a progression is considered to be generally
+   * Forward or Backward. For the logic see
+   * BaseDeltaIterator::IsMovingForward() and
+   * BaseDeltaIterator::IsMovingBackward().
+   */
+  enum Progress {
+    // initial state, also considered
+    // to be a forward progression
+    TO_BE_DETERMINED = 0,
+
+    // forward progressions
+    SEEK_TO_FIRST = 1,
+    SEEK = 2,
+    FORWARD = 3,
+
+    // backward progressions
+    BACKWARD = 4,
+    SEEK_FOR_PREV = 5,
+    SEEK_TO_LAST = 6
+  };
+
+  Progress progress_;
   bool current_at_base_;
   bool equal_keys_;
   Status status_;
   std::unique_ptr<Iterator> base_iterator_;
   std::unique_ptr<WBWIIterator> delta_iterator_;
   const Comparator* comparator_;  // not owned
-  const Slice* iterate_upper_bound_;
+  const ReadOptions* read_options_;  // not owned
 };
 
 // Key used by skip list, as the binary searchable index of WriteBatchWithIndex.

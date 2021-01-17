@@ -1,34 +1,45 @@
 #!/usr/bin/env bash
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved.
 
+# Build Script for building RocksJava Static
+# binaries on CentOS within a Docker container
+
 set -e
 #set -x
 
-# just in-case this is run outside Docker
-mkdir -p /rocksdb-local-build
+HOST_SRC_DIR="${HOST_SRC_DIR:-/rocksdb-host}"
+CONTAINER_SRC_DIR="${CONTAINER_SRC_DIR:-/rocksdb-local-build}"
+CONTAINER_TARGET_DIR="${CONTAINER_TARGET_DIR:-/rocksdb-java-target}"
+J="${J:-2}"
 
-rm -rf /rocksdb-local-build/*
-cp -r /rocksdb-host/* /rocksdb-local-build
-cd /rocksdb-local-build
+# Just in-case this is run outside the Docker container
+mkdir -p $CONTAINER_SRC_DIR
+mkdir -p $CONTAINER_TARGET_DIR
+
+# Copy RocksDB from the Docker host into the container
+if [ -z "$SKIP_COPY" ]; then
+	rm -rf $CONTAINER_SRC_DIR/*
+	cp -r $HOST_SRC_DIR/* $CONTAINER_SRC_DIR
+	cd $CONTAINER_SRC_DIR
+fi
 
 # Use scl devtoolset if available
 if hash scl 2>/dev/null; then
 	if scl --list | grep -q 'devtoolset-7'; then
 		# CentOS 7+
 		scl enable devtoolset-7 'make clean-not-downloaded'
-		scl enable devtoolset-7 'PORTABLE=1 make -j2 rocksdbjavastatic'
+		scl enable devtoolset-7 'PORTABLE=1 make -j$J rocksdbjavastatic'
 	elif scl --list | grep -q 'devtoolset-2'; then
 		# CentOS 5 or 6
 		scl enable devtoolset-2 'make clean-not-downloaded'
-		scl enable devtoolset-2 'PORTABLE=1 make -j2 rocksdbjavastatic'
+		scl enable devtoolset-2 'PORTABLE=1 make -j$J rocksdbjavastatic'
 	else
 		echo "Could not find devtoolset"
 		exit 1;
 	fi
 else
 	make clean-not-downloaded
-        PORTABLE=1 make -j2 rocksdbjavastatic
+    PORTABLE=1 make -j$J rocksdbjavastatic
 fi
 
-cp java/target/librocksdbjni-linux*.so java/target/rocksdbjni-*-linux*.jar java/target/rocksdbjni-*-linux*.jar.sha1 /rocksdb-java-target
-
+cp java/target/librocksdbjni-linux*.so java/target/rocksdbjni-*-linux*.jar java/target/rocksdbjni-*-linux*.jar.sha1 $CONTAINER_TARGET_DIR

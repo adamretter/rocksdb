@@ -24,6 +24,10 @@ if [ -z "$SKIP_COPY" ]; then
 fi
 
 make clean-not-downloaded
-PORTABLE=1 make -j$J rocksdbjavastatic
+if [ -z "$SHARED_LIB" ]; then
+	PORTABLE=1 make -j$J rocksdbjavastatic
+else
+	PORTABLE=1 make -j$J rocksdbjavas
+fi
 
 cp java/target/librocksdbjni-linux*.so java/target/rocksdbjni-*-linux*.jar java/target/rocksdbjni-*-linux*.jar.sha1 $CONTAINER_TARGET_DIR

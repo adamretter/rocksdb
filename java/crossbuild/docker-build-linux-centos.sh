@@ -28,11 +28,20 @@ if hash scl 2>/dev/null; then
 	if scl --list | grep -q 'devtoolset-7'; then
 		# CentOS 7+
 		scl enable devtoolset-7 'make clean-not-downloaded'
-		scl enable devtoolset-7 'PORTABLE=1 make -j$J rocksdbjavastatic'
+		if [ -z "$SHARED_LIB" ]; then
+			scl enable devtoolset-7 'PORTABLE=1 make -j$J rocksdbjavastatic'
+		else
+			scl enable devtoolset-7 'PORTABLE=1 make -j$J rocksdbjava'
+		fi
+
 	elif scl --list | grep -q 'devtoolset-2'; then
 		# CentOS 5 or 6
 		scl enable devtoolset-2 'make clean-not-downloaded'
-		scl enable devtoolset-2 'PORTABLE=1 make -j$J rocksdbjavastatic'
+		if [ -z "$SHARED_LIB" ]; then
+			scl enable devtoolset-2 'PORTABLE=1 make -j$J rocksdbjavastatic'
+		else
+			scl enable devtoolset-2 'PORTABLE=1 make -j$J rocksdbjava'
+		fi
 	else
 		echo "Could not find devtoolset"
 		exit 1;

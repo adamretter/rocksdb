@@ -232,7 +232,6 @@ public class EventListenerTest {
 
   @Test
   public void testAllCallbacksInvocation() {
-    final int TEST_INT_VAL = -1;
     final long TEST_LONG_VAL = -1;
     // Expected test data objects
     final Map<String, String> userCollectedPropertiesTestData =

@@ -58,4 +58,18 @@ public class TestUtil {
     random.nextBytes(str);
     return str;
   }
+
+  /**
+   * Generate a random int within a range.
+   *
+   * @param random the random generator
+   * @param minInclusive the minimum int value of the range (inclusive)
+   * @param maxInclusive the maximum int value of the range (inclusive)
+   *
+   * @return the random int
+   */
+  public static int intBetween(final Random random, final int minInclusive,
+        final int maxInclusive) {
+    return random.nextInt((maxInclusive - minInclusive) + 1) + minInclusive;
+  }
 }

@@ -11,6 +11,7 @@ import org.junit.Test;
 import java.util.Random;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.rocksdb.util.TestUtil.intBetween;
 
 public class EnvOptionsTest {
   @ClassRule
@@ -104,8 +105,11 @@ public class EnvOptionsTest {
 
   @Test
   public void compactionReadaheadSize() {
+    // NOTE: default size is 0
+    final int def = 0;
+
     try (final EnvOptions envOptions = new EnvOptions()) {
-      final int intValue = rand.nextInt();
+      final int intValue = intBetween(rand, def + 1024, def + 8192);
       envOptions.setCompactionReadaheadSize(intValue);
       assertThat(envOptions.compactionReadaheadSize()).isEqualTo(intValue);
     }
@@ -113,8 +117,11 @@ public class EnvOptionsTest {
 
   @Test
   public void randomAccessMaxBufferSize() {
+    // NOTE: default size is 0
+    final int def = 0;
+
     try (final EnvOptions envOptions = new EnvOptions()) {
-      final int intValue = rand.nextInt();
+      final int intValue = intBetween(rand, def + 1024, def + 8192);
       envOptions.setRandomAccessMaxBufferSize(intValue);
       assertThat(envOptions.randomAccessMaxBufferSize()).isEqualTo(intValue);
     }
@@ -122,8 +129,11 @@ public class EnvOptionsTest {
 
   @Test
   public void writableFileMaxBufferSize() {
+    // NOTE: default size is 1MB
+    final int def = 1024 * 1024;
+
     try (final EnvOptions envOptions = new EnvOptions()) {
-      final int intValue = rand.nextInt();
+      final int intValue = intBetween(rand, def * 2, def * 10);
       envOptions.setWritableFileMaxBufferSize(intValue);
       assertThat(envOptions.writableFileMaxBufferSize()).isEqualTo(intValue);
     }

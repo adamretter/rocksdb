@@ -10,9 +10,9 @@
 
 #include <jni.h>
 
-#include "include/org_rocksdb_CompactionJobStats.h"
-#include "rocksjni/cplusplus_to_java_convert.h"
-#include "rocksjni/portal.h"
+#include "org_rocksdb_CompactionJobStats.h"
+#include "cplusplus_to_java_convert.h"
+#include "portal.h"
 
 /*
  * Class:     org_rocksdb_CompactionJobStats

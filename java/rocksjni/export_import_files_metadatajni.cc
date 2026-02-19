@@ -4,9 +4,9 @@
 //  COPYING file in the root directory) and Apache 2.0 License
 //  (found in the LICENSE.Apache file in the root directory).
 
-#include "include/org_rocksdb_ExportImportFilesMetaData.h"
-#include "include/org_rocksdb_LiveFileMetaData.h"
-#include "rocksjni/portal.h"
+#include "org_rocksdb_ExportImportFilesMetaData.h"
+#include "org_rocksdb_LiveFileMetaData.h"
+#include "portal.h"
 
 /*
  * Class:     org_rocksdb_ExportImportFilesMetaData

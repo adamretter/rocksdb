@@ -1,15 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd" xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+<project
+    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd"
+    xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>org.rocksdb</groupId>
     <artifactId>rocksdbjni</artifactId>
-    <version>${ROCKSDB_JAVA_VERSION}</version>  <!-- this will be replaced by the Makefile's rocksdbjavageneratepom target -->
+    <version>0.0.0-SNAPSHOT</version>  <!-- The version number will be replaced by the Makefile's `rocksdbjavageneratepom` target -->
 
     <name>RocksDB JNI</name>
-    <description>RocksDB fat jar that contains .so files for linux32 and linux64 (glibc and musl-libc), jnilib files
-        for Mac OSX, and a .dll for Windows x64.
-    </description>
+    <description>RocksDB Java API and Native Libraries</description>
     <url>https://rocksdb.org</url>
     <inceptionYear>2012</inceptionYear>
 
@@ -41,7 +41,7 @@
         <developer>
             <name>Facebook</name>
             <email>help@facebook.com</email>
-            <timezone>America/New_York</timezone>
+            <timezone>-8</timezone>
             <roles>
                 <role>architect</role>
             </roles>
@@ -62,27 +62,117 @@
         <project.build.source>1.8</project.build.source>
         <project.build.target>1.8</project.build.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+
+        <!-- The folder that will hold the natively compiled libraries - these are output from the Makefile -->
+        <native.library.staging.dir>${project.basedir}/target-native</native.library.staging.dir>
     </properties>
 
     <build>
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-assembly-plugin</artifactId>
+                    <version>3.8.0</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-enforcer-plugin</artifactId>
+                    <version>3.6.2</version>
+                </plugin>
+            </plugins>
+        </pluginManagement>
+
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.2</version>
+                <artifactId>maven-enforcer-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>enforce-maven-version</id>
+                        <goals>
+                            <goal>enforce</goal>
+                        </goals>
+                        <configuration>
+                            <rules>
+                                <requireMavenVersion>
+                                    <version>3.9.0</version>
+                                </requireMavenVersion>
+                            </rules>
+                            <fail>true</fail>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>pl.project13.maven</groupId>
+                <artifactId>git-commit-id-plugin</artifactId>
+                <version>4.9.10</version>
+                <executions>
+                    <execution>
+                        <id>git-properties</id>
+                        <goals>
+                            <goal>revision</goal>
+                        </goals>
+                        <phase>initialize</phase>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-resources-plugin</artifactId>
+                <version>3.4.0</version>
                 <configuration>
-                    <source>${project.build.source}</source>
-                    <target>${project.build.target}</target>
                     <encoding>${project.build.sourceEncoding}</encoding>
                 </configuration>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-surefire-plugin</artifactId>
-                <version>2.18.1</version>
+                <artifactId>maven-jar-plugin</artifactId>
+                <version>3.5.0</version>
                 <configuration>
-                    <argLine>${argLine} -ea -Xcheck:jni -Djava.library.path=${project.build.directory}</argLine>
-                    <useManifestOnlyJar>false</useManifestOnlyJar>  
+                    <archive>
+                        <manifest>
+                            <addDefaultSpecificationEntries>true</addDefaultSpecificationEntries>
+                            <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
+                        </manifest>
+                        <manifestEntries>
+                            <Build-Tag>${git.closest.tag.name}</Build-Tag>
+                            <Git-Commit>${git.commit.id}</Git-Commit>
+                            <Git-Commit-Abbrev>${git.commit.id.abbrev}</Git-Commit-Abbrev>
+                            <Git-Commit-Timestamp>${git.commit.time}</Git-Commit-Timestamp>
+                            <Build-Version>${git.build.version}</Build-Version>
+                            <Build-Timestamp>${maven.build.timestamp}</Build-Timestamp>
+                            <Source-Repository>${project.scm.connection}</Source-Repository>
+                            <Description>${project.description}</Description>
+                            <Implementation-URL>${project.url}</Implementation-URL>
+                        </manifestEntries>
+                    </archive>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.15.0</version>
+                <configuration>
+                    <source>${project.build.source}</source>
+                    <target>${project.build.target}</target>
+                    <encoding>${project.build.sourceEncoding}</encoding>
+
+                    <!-- Generate JNI include files -->
+                    <compilerArgs>
+                        <arg>-h</arg>
+                        <arg>${project.build.directory}/generated-sources/jni</arg>
+                    </compilerArgs>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>3.5.4</version>
+                <configuration>
+                    <argLine>${argLine} -ea -Xcheck:jni -Djava.library.path=${project.basedir}/target-native</argLine>
+                    <useManifestOnlyJar>false</useManifestOnlyJar>
                     <useSystemClassLoader>false</useSystemClassLoader>
                     <additionalClasspathElements>
                         <additionalClasspathElement>${project.build.directory}/*</additionalClasspathElement>
@@ -92,7 +182,7 @@
             <plugin>
                 <groupId>org.jacoco</groupId>
                 <artifactId>jacoco-maven-plugin</artifactId>
-                <version>0.7.2.201409121644</version>
+                <version>0.8.14</version>
                 <executions>
                     <execution>
                         <goals>
@@ -109,82 +199,39 @@
                 </executions>
             </plugin>
             <plugin>
-                <groupId>org.codehaus.gmaven</groupId>
-                <artifactId>groovy-maven-plugin</artifactId>
-                <version>2.0</version>
-                <executions>
-                    <execution>
-                        <phase>process-classes</phase>
-                        <goals>
-                            <goal>execute</goal>
-                        </goals>
-                        <configuration>
-                            <defaults>
-                                <name>Xenu</name>
-                            </defaults>
-                            <source>
-                                String fileContents = new File(project.basedir.absolutePath + '/../include/rocksdb/version.h').getText('UTF-8')
-                                matcher = (fileContents =~ /(?s).*ROCKSDB_MAJOR ([0-9]+).*?/)
-                                String major_version = matcher.getAt(0).getAt(1)
-                                matcher = (fileContents =~ /(?s).*ROCKSDB_MINOR ([0-9]+).*?/)
-                                String minor_version = matcher.getAt(0).getAt(1)
-                                matcher = (fileContents =~ /(?s).*ROCKSDB_PATCH ([0-9]+).*?/)
-                                String patch_version = matcher.getAt(0).getAt(1)
-                                String version = String.format('%s.%s.%s', major_version, minor_version, patch_version)
-                                // Set version to be used in pom.properties
-                                project.version = version
-                                // Set version to be set as jar name
-                                project.build.finalName = project.artifactId + "-" + version
-                            </source>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
-            <plugin>
                 <groupId>com.github.spotbugs</groupId>
                 <artifactId>spotbugs-maven-plugin</artifactId>
-                <version>4.7.2.1</version>
+                <version>4.9.8.2</version>
                 <configuration>
                     <excludeFilterFile>spotbugs-exclude.xml</excludeFilterFile>
-                </configuration>          
-                <dependencies>
-                  <!-- overwrite dependency on spotbugs if you want to specify the version of spotbugs -->
-                  <dependency>
-                    <groupId>com.github.spotbugs</groupId>
-                    <artifactId>spotbugs</artifactId>
-                    <version>4.7.3</version>
-                  </dependency>
-                </dependencies>
-              </plugin>
-              <plugin>
+                </configuration>
+            </plugin>
+            <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-pmd-plugin</artifactId>
-                <version>3.20.0</version>
+                <version>3.28.0</version>
                 <executions>
-                  <execution>
-                    <goals>
-                      <goal>check</goal>
-                      <goal>cpd-check</goal>
-                    </goals>
-                  </execution>
+                    <execution>
+                        <goals>
+                            <goal>check</goal>
+                            <goal>cpd-check</goal>
+                        </goals>
+                    </execution>
                 </executions>
                 <configuration>
                     <rulesets>
-                      <!-- A rule set, that comes bundled with PMD -->
-                      <ruleset>/pmd-rules.xml</ruleset>
-                      <!-- A rule set, that comes bundled with PMD -->
-                      <!-- <ruleset>/category/java/errorprone.xml</ruleset> -->
+                        <ruleset>/pmd-rules.xml</ruleset>
                     </rulesets>
-                  </configuration>          
-              </plugin>
-      </plugins>
+                </configuration>
+            </plugin>
+        </plugins>
     </build>
 
     <dependencies>
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
-            <version>4.13.1</version>
+            <version>4.13.2</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -202,7 +249,7 @@
         <dependency>
             <groupId>org.assertj</groupId>
             <artifactId>assertj-core</artifactId>
-            <version>2.9.0</version>
+            <version>3.27.7</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -211,15 +258,647 @@
             <version>1.10.19</version>
             <scope>test</scope>
         </dependency>
-   </dependencies>
+    </dependencies>
 
-   <reporting>
-    <plugins>
-        <plugin>
-            <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-jxr-plugin</artifactId>
-            <version>3.3.0</version>
-        </plugin>
-    </plugins>
-  </reporting>
+    <reporting>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jxr-plugin</artifactId>
+                <version>3.6.0</version>
+            </plugin>
+        </plugins>
+    </reporting>
+
+    <profiles>
+
+        <profile>
+            <id>source-jar</id>
+            <activation>
+                <property>
+                    <name>release.all</name>
+                </property>
+            </activation>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-source-plugin</artifactId>
+                        <version>3.4.0</version>
+                        <executions>
+                            <execution>
+                                <id>attach-sources</id>
+                                <goals>
+                                    <goal>jar-no-fork</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                        <configuration>
+                            <archive>
+                                <manifest>
+                                    <addDefaultSpecificationEntries>true</addDefaultSpecificationEntries>
+                                    <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
+                                </manifest>
+                                <manifestEntries>
+                                    <Build-Tag>${git.branch}</Build-Tag>
+                                    <Git-Commit>${git.commit.id}</Git-Commit>
+                                    <Git-Commit-Abbrev>${git.commit.id.abbrev}</Git-Commit-Abbrev>
+                                    <Git-Commit-Timestamp>${git.commit.time}</Git-Commit-Timestamp>
+                                    <Build-Version>${git.build.version}</Build-Version>
+                                    <Build-Timestamp>${maven.build.timestamp}</Build-Timestamp>
+                                    <Source-Repository>${project.scm.connection}</Source-Repository>
+                                    <Description>${project.description}</Description>
+                                    <Implementation-URL>${project.url}</Implementation-URL>
+                                </manifestEntries>
+                            </archive>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+        
+        <profile>
+            <id>javadoc-jar</id>
+            <activation>
+                <property>
+                    <name>release.all</name>
+                </property>
+            </activation>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-javadoc-plugin</artifactId>
+                        <version>3.12.0</version>
+                        <executions>
+                            <execution>
+                                <id>attach-javadocs</id>
+                                <goals>
+                                    <goal>jar</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                        <configuration>
+                            <archive>
+                                <manifest>
+                                    <addDefaultSpecificationEntries>true</addDefaultSpecificationEntries>
+                                    <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
+                                </manifest>
+                                <manifestEntries>
+                                    <Build-Tag>${git.branch}</Build-Tag>
+                                    <Git-Commit>${git.commit.id}</Git-Commit>
+                                    <Git-Commit-Abbrev>${git.commit.id.abbrev}</Git-Commit-Abbrev>
+                                    <Git-Commit-Timestamp>${git.commit.time}</Git-Commit-Timestamp>
+                                    <Build-Version>${git.build.version}</Build-Version>
+                                    <Build-Timestamp>${maven.build.timestamp}</Build-Timestamp>
+                                    <Source-Repository>${project.scm.connection}</Source-Repository>
+                                    <Description>${project.description}</Description>
+                                    <Implementation-URL>${project.url}</Implementation-URL>
+                                </manifestEntries>
+                            </archive>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+        
+        <profile>
+            <id>main-jar</id>
+            <activation>
+                <property>
+                    <name>release.all</name>
+                </property>
+            </activation>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-assembly-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>create-release-jar</id>
+                                <phase>package</phase>
+                                <goals>
+                                    <goal>single</goal>
+                                </goals>
+                                <configuration>
+                                    <!-- Replace the main Jar with this Jar that also includes native libraries -->
+                                    <appendAssemblyId>false</appendAssemblyId>
+                                    <inlineDescriptors>
+                                        <inlineDescriptor>
+                                            <id>main</id>
+                                            <formats>
+                                                <format>jar</format>
+                                            </formats>
+                                            <includeBaseDirectory>false</includeBaseDirectory>
+                                            <fileSets>
+                                                <fileSet>
+                                                    <directory>${project.build.outputDirectory}</directory>
+                                                    <outputDirectory>/</outputDirectory>
+                                                </fileSet>
+                                                <fileSet>
+                                                    <directory>${native.library.staging.dir}</directory>
+                                                    <outputDirectory>/</outputDirectory>
+                                                    <includes>
+                                                        <include>*.so</include>
+                                                        <include>*.jnilib</include>
+                                                        <include>*.dll</include>
+                                                    </includes>
+                                                </fileSet>
+                                            </fileSets>
+                                        </inlineDescriptor>
+                                    </inlineDescriptors>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+
+        <profile>
+            <id>linux32-jar</id>
+            <activation>
+                <property>
+                    <name>release.all</name>
+                </property>
+            </activation>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-assembly-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>create-linux32-jar</id>
+                                <phase>package</phase>
+                                <goals>
+                                    <goal>single</goal>
+                                </goals>
+                                <configuration>
+                                    <attach>true</attach>
+                                    <inlineDescriptors>
+                                        <inlineDescriptor>
+                                            <id>linux32</id>
+                                            <formats>
+                                                <format>jar</format>
+                                            </formats>
+                                            <includeBaseDirectory>false</includeBaseDirectory>
+                                            <fileSets>
+                                                <fileSet>
+                                                  <directory>${project.build.outputDirectory}</directory>
+                                                  <outputDirectory>/</outputDirectory>
+                                                </fileSet>
+                                                <fileSet>
+                                                  <directory>${native.library.staging.dir}</directory>
+                                                  <outputDirectory>/</outputDirectory>
+                                                  <includes>
+                                                  <include>librocksdbjni-linux32.so</include>
+                                                  </includes>
+                                                </fileSet>
+                                            </fileSets>
+                                        </inlineDescriptor>
+                                    </inlineDescriptors>
+                                    <archive>
+                                        <manifest>
+                                            <addDefaultSpecificationEntries>true</addDefaultSpecificationEntries>
+                                            <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
+                                        </manifest>
+                                        <manifestEntries>
+                                            <Build-Tag>${git.branch}</Build-Tag>
+                                            <Git-Commit>${git.commit.id}</Git-Commit>
+                                            <Git-Commit-Abbrev>${git.commit.id.abbrev}</Git-Commit-Abbrev>
+                                            <Git-Commit-Timestamp>${git.commit.time}</Git-Commit-Timestamp>
+                                            <Build-Version>${git.build.version}</Build-Version>
+                                            <Build-Timestamp>${maven.build.timestamp}</Build-Timestamp>
+                                            <Source-Repository>${project.scm.connection}</Source-Repository>
+                                            <Description>${project.description} for Linux i386 glibc</Description>
+                                            <Implementation-URL>${project.url}</Implementation-URL>
+                                        </manifestEntries>
+                                    </archive>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+
+        <profile>
+            <id>linux32-musl-jar</id>
+            <activation>
+                <property>
+                    <name>release.all</name>
+                </property>
+            </activation>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-assembly-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>create-linux32-musl-jar</id>
+                                <phase>package</phase>
+                                <goals>
+                                    <goal>single</goal>
+                                </goals>
+                                <configuration>
+                                    <attach>true</attach>
+                                    <inlineDescriptors>
+                                        <inlineDescriptor>
+                                            <id>linux32-musl</id>
+                                            <formats>
+                                                <format>jar</format>
+                                            </formats>
+                                            <includeBaseDirectory>false</includeBaseDirectory>
+                                            <fileSets>
+                                                <fileSet>
+                                                  <directory>${project.build.outputDirectory}</directory>
+                                                  <outputDirectory>/</outputDirectory>
+                                                </fileSet>
+                                                <fileSet>
+                                                  <directory>${native.library.staging.dir}</directory>
+                                                  <outputDirectory>/</outputDirectory>
+                                                  <includes>
+                                                  <include>librocksdbjni-linux32-musl.so</include>
+                                                  </includes>
+                                                </fileSet>
+                                            </fileSets>
+                                        </inlineDescriptor>
+                                    </inlineDescriptors>
+                                    <archive>
+                                        <manifest>
+                                            <addDefaultSpecificationEntries>true</addDefaultSpecificationEntries>
+                                            <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
+                                        </manifest>
+                                        <manifestEntries>
+                                            <Build-Tag>${git.branch}</Build-Tag>
+                                            <Git-Commit>${git.commit.id}</Git-Commit>
+                                            <Git-Commit-Abbrev>${git.commit.id.abbrev}</Git-Commit-Abbrev>
+                                            <Git-Commit-Timestamp>${git.commit.time}</Git-Commit-Timestamp>
+                                            <Build-Version>${git.build.version}</Build-Version>
+                                            <Build-Timestamp>${maven.build.timestamp}</Build-Timestamp>
+                                            <Source-Repository>${project.scm.connection}</Source-Repository>
+                                            <Description>${project.description} for Linux i386 musl</Description>
+                                            <Implementation-URL>${project.url}</Implementation-URL>
+                                        </manifestEntries>
+                                    </archive>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+
+        <profile>
+            <id>linux64-jar</id>
+            <activation>
+                <property>
+                    <name>release.all</name>
+                </property>
+            </activation>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-assembly-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>create-linux64-jar</id>
+                                <phase>package</phase>
+                                <goals>
+                                    <goal>single</goal>
+                                </goals>
+                                <configuration>
+                                    <attach>true</attach>
+                                    <inlineDescriptors>
+                                        <inlineDescriptor>
+                                            <id>linux64</id>
+                                            <formats>
+                                                <format>jar</format>
+                                            </formats>
+                                            <includeBaseDirectory>false</includeBaseDirectory>
+                                            <fileSets>
+                                                <fileSet>
+                                                  <directory>${project.build.outputDirectory}</directory>
+                                                  <outputDirectory>/</outputDirectory>
+                                                </fileSet>
+                                                <fileSet>
+                                                  <directory>${native.library.staging.dir}</directory>
+                                                  <outputDirectory>/</outputDirectory>
+                                                  <includes>
+                                                  <include>librocksdbjni-linux64.so</include>
+                                                  <include>librocksdbjni-linux-aarch64.so</include>
+                                                  <include>librocksdbjni-linux-ppc64le.so</include>
+                                                  <include>librocksdbjni-linux-s390x.so</include>
+                                                  <include>librocksdbjni-linux-riscv64.so</include>
+                                                  </includes>
+                                                </fileSet>
+                                            </fileSets>
+                                        </inlineDescriptor>
+                                    </inlineDescriptors>
+                                    <archive>
+                                        <manifest>
+                                            <addDefaultSpecificationEntries>true</addDefaultSpecificationEntries>
+                                            <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
+                                        </manifest>
+                                        <manifestEntries>
+                                            <Build-Tag>${git.branch}</Build-Tag>
+                                            <Git-Commit>${git.commit.id}</Git-Commit>
+                                            <Git-Commit-Abbrev>${git.commit.id.abbrev}</Git-Commit-Abbrev>
+                                            <Git-Commit-Timestamp>${git.commit.time}</Git-Commit-Timestamp>
+                                            <Build-Version>${git.build.version}</Build-Version>
+                                            <Build-Timestamp>${maven.build.timestamp}</Build-Timestamp>
+                                            <Source-Repository>${project.scm.connection}</Source-Repository>
+                                            <Description>${project.description} for Linux x86_64 glibc</Description>
+                                            <Implementation-URL>${project.url}</Implementation-URL>
+                                        </manifestEntries>
+                                    </archive>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+
+        <profile>
+            <id>linux64-musl-jar</id>
+            <activation>
+                <property>
+                    <name>release.all</name>
+                </property>
+            </activation>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-assembly-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>create-linux64-musl-jar</id>
+                                <phase>package</phase>
+                                <goals>
+                                    <goal>single</goal>
+                                </goals>
+                                <configuration>
+                                    <attach>true</attach>
+                                    <inlineDescriptors>
+                                        <inlineDescriptor>
+                                            <id>linux64-musl</id>
+                                            <formats>
+                                                <format>jar</format>
+                                            </formats>
+                                            <includeBaseDirectory>false</includeBaseDirectory>
+                                            <fileSets>
+                                                <fileSet>
+                                                  <directory>${project.build.outputDirectory}</directory>
+                                                  <outputDirectory>/</outputDirectory>
+                                                </fileSet>
+                                                <fileSet>
+                                                  <directory>${native.library.staging.dir}</directory>
+                                                  <outputDirectory>/</outputDirectory>
+                                                  <includes>
+                                                  <include>librocksdbjni-linux64-musl.so</include>
+                                                  <include>librocksdbjni-linux-aarch64-musl.so</include>
+                                                  <include>librocksdbjni-linux-ppc64le-musl.so</include>
+                                                  <include>librocksdbjni-linux-s390x-musl.so</include>
+                                                  <include>librocksdbjni-linux-riscv64-musl.so</include>
+                                                  </includes>
+                                                </fileSet>
+                                            </fileSets>
+                                        </inlineDescriptor>
+                                    </inlineDescriptors>
+                                    <archive>
+                                        <manifest>
+                                            <addDefaultSpecificationEntries>true</addDefaultSpecificationEntries>
+                                            <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
+                                        </manifest>
+                                        <manifestEntries>
+                                            <Build-Tag>${git.branch}</Build-Tag>
+                                            <Git-Commit>${git.commit.id}</Git-Commit>
+                                            <Git-Commit-Abbrev>${git.commit.id.abbrev}</Git-Commit-Abbrev>
+                                            <Git-Commit-Timestamp>${git.commit.time}</Git-Commit-Timestamp>
+                                            <Build-Version>${git.build.version}</Build-Version>
+                                            <Build-Timestamp>${maven.build.timestamp}</Build-Timestamp>
+                                            <Source-Repository>${project.scm.connection}</Source-Repository>
+                                            <Description>${project.description} for Linux x86_64 musl</Description>
+                                            <Implementation-URL>${project.url}</Implementation-URL>
+                                        </manifestEntries>
+                                    </archive>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+
+        <profile>
+            <id>osx-jar</id>
+            <activation>
+                <property>
+                    <name>release.all</name>
+                </property>
+            </activation>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-assembly-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>create-osx-jar</id>
+                                <phase>package</phase>
+                                <goals>
+                                    <goal>single</goal>
+                                </goals>
+                                <configuration>
+                                    <attach>true</attach>
+                                    <inlineDescriptors>
+                                        <inlineDescriptor>
+                                            <id>osx</id>
+                                            <formats>
+                                                <format>jar</format>
+                                            </formats>
+                                            <includeBaseDirectory>false</includeBaseDirectory>
+                                            <fileSets>
+                                                <fileSet>
+                                                  <directory>${project.build.outputDirectory}</directory>
+                                                  <outputDirectory>/</outputDirectory>
+                                                </fileSet>
+                                                <fileSet>
+                                                  <directory>${native.library.staging.dir}</directory>
+                                                  <outputDirectory>/</outputDirectory>
+                                                  <includes>
+                                                  <include>*.jnilib</include>
+                                                  </includes>
+                                                </fileSet>
+                                            </fileSets>
+                                        </inlineDescriptor>
+                                    </inlineDescriptors>
+                                    <archive>
+                                        <manifest>
+                                            <addDefaultSpecificationEntries>true</addDefaultSpecificationEntries>
+                                            <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
+                                        </manifest>
+                                        <manifestEntries>
+                                            <Build-Tag>${git.branch}</Build-Tag>
+                                            <Git-Commit>${git.commit.id}</Git-Commit>
+                                            <Git-Commit-Abbrev>${git.commit.id.abbrev}</Git-Commit-Abbrev>
+                                            <Git-Commit-Timestamp>${git.commit.time}</Git-Commit-Timestamp>
+                                            <Build-Version>${git.build.version}</Build-Version>
+                                            <Build-Timestamp>${maven.build.timestamp}</Build-Timestamp>
+                                            <Source-Repository>${project.scm.connection}</Source-Repository>
+                                            <Description>${project.description} for macOS</Description>
+                                            <Implementation-URL>${project.url}</Implementation-URL>
+                                        </manifestEntries>
+                                    </archive>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+
+        <profile>
+            <id>win64-jar</id>
+            <activation>
+                <property>
+                    <name>release.all</name>
+                </property>
+            </activation>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-assembly-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>create-win64-jar</id>
+                                <phase>package</phase>
+                                <goals>
+                                    <goal>single</goal>
+                                </goals>
+                                <configuration>
+                                    <attach>true</attach>
+                                    <inlineDescriptors>
+                                        <inlineDescriptor>
+                                            <id>win64</id>
+                                            <formats>
+                                                <format>jar</format>
+                                            </formats>
+                                            <includeBaseDirectory>false</includeBaseDirectory>
+                                            <fileSets>
+                                                <fileSet>
+                                                  <directory>${project.build.outputDirectory}</directory>
+                                                  <outputDirectory>/</outputDirectory>
+                                                </fileSet>
+                                                <fileSet>
+                                                  <directory>${native.library.staging.dir}</directory>
+                                                  <outputDirectory>/</outputDirectory>
+                                                  <includes>
+                                                  <include>*.dll</include>
+                                                  </includes>
+                                                </fileSet>
+                                            </fileSets>
+                                        </inlineDescriptor>
+                                    </inlineDescriptors>
+                                    <archive>
+                                        <manifest>
+                                            <addDefaultSpecificationEntries>true</addDefaultSpecificationEntries>
+                                            <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
+                                        </manifest>
+                                        <manifestEntries>
+                                            <Build-Tag>${git.branch}</Build-Tag>
+                                            <Git-Commit>${git.commit.id}</Git-Commit>
+                                            <Git-Commit-Abbrev>${git.commit.id.abbrev}</Git-Commit-Abbrev>
+                                            <Git-Commit-Timestamp>${git.commit.time}</Git-Commit-Timestamp>
+                                            <Build-Version>${git.build.version}</Build-Version>
+                                            <Build-Timestamp>${maven.build.timestamp}</Build-Timestamp>
+                                            <Source-Repository>${project.scm.connection}</Source-Repository>
+                                            <Description>${project.description} for Windows x86_64</Description>
+                                            <Implementation-URL>${project.url}</Implementation-URL>
+                                        </manifestEntries>
+                                    </archive>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+        
+        <profile>
+            <id>release</id>
+            <activation>
+                <property>
+                    <name>release.all</name>
+                </property>
+            </activation>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-enforcer-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>enforce-java-version</id>
+                                <goals>
+                                    <goal>enforce</goal>
+                                </goals>
+                                <configuration>
+                                    <rules>
+                                        <requireJavaVersion>
+                                            <version>${project.build.target}</version>
+                                        </requireJavaVersion>
+                                    </rules>
+                                    <fail>true</fail>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-gpg-plugin</artifactId>
+                        <version>3.2.8</version>
+                        <executions>
+                            <execution>
+                                <id>sign-artifacts</id>
+                                <phase>verify</phase>
+                                <goals>
+                                    <goal>sign</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+        
+        <profile>
+            <id>publish</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.sonatype.central</groupId>
+                        <artifactId>central-publishing-maven-plugin</artifactId>
+                        <version>0.10.0</version>
+                        <extensions>true</extensions>
+                        <configuration>
+                            <publishingServerId>central</publishingServerId>
+                            <deploymentName>${project.artifactId}-${project.version}</deploymentName>
+                            <failOnBuildFailure>true</failOnBuildFailure>
+                            <waitUntil>validated</waitUntil>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+
+    </profiles>
+
 </project>

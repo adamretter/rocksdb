@@ -14,10 +14,10 @@
 #include <string>
 #include <vector>
 
-#include "include/org_rocksdb_BackupEngineOptions.h"
+#include "org_rocksdb_BackupEngineOptions.h"
 #include "rocksdb/utilities/backup_engine.h"
-#include "rocksjni/cplusplus_to_java_convert.h"
-#include "rocksjni/portal.h"
+#include "cplusplus_to_java_convert.h"
+#include "portal.h"
 
 ///////////////////////////////////////////////////////////////////////////
 // BackupDBOptions

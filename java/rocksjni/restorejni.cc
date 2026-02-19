@@ -13,10 +13,10 @@
 
 #include <string>
 
-#include "include/org_rocksdb_RestoreOptions.h"
+#include "org_rocksdb_RestoreOptions.h"
 #include "rocksdb/utilities/backup_engine.h"
-#include "rocksjni/cplusplus_to_java_convert.h"
-#include "rocksjni/portal.h"
+#include "cplusplus_to_java_convert.h"
+#include "portal.h"
 /*
  * Class:     org_rocksdb_RestoreOptions
  * Method:    newRestoreOptions

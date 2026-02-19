@@ -9,9 +9,9 @@
 
 #include <jni.h>
 
-#include "include/org_rocksdb_EnvOptions.h"
+#include "org_rocksdb_EnvOptions.h"
 #include "rocksdb/env.h"
-#include "rocksjni/cplusplus_to_java_convert.h"
+#include "cplusplus_to_java_convert.h"
 
 #define ENV_OPTIONS_SET_BOOL(_jhandle, _opt)                         \
   reinterpret_cast<ROCKSDB_NAMESPACE::EnvOptions*>(_jhandle)->_opt = \

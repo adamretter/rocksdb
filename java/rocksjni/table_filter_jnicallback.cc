@@ -6,9 +6,9 @@
 // This file implements the callback "bridge" between Java and C++ for
 // ROCKSDB_NAMESPACE::TableFilter.
 
-#include "rocksjni/table_filter_jnicallback.h"
+#include "table_filter_jnicallback.h"
 
-#include "rocksjni/portal.h"
+#include "portal.h"
 
 namespace ROCKSDB_NAMESPACE {
 TableFilterJniCallback::TableFilterJniCallback(JNIEnv* env,

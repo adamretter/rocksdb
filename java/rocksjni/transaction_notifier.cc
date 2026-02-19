@@ -8,9 +8,9 @@
 
 #include <jni.h>
 
-#include "include/org_rocksdb_AbstractTransactionNotifier.h"
-#include "rocksjni/cplusplus_to_java_convert.h"
-#include "rocksjni/transaction_notifier_jnicallback.h"
+#include "org_rocksdb_AbstractTransactionNotifier.h"
+#include "cplusplus_to_java_convert.h"
+#include "transaction_notifier_jnicallback.h"
 
 /*
  * Class:     org_rocksdb_AbstractTransactionNotifier

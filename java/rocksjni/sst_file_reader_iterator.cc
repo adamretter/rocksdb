@@ -10,9 +10,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "include/org_rocksdb_SstFileReaderIterator.h"
+#include "org_rocksdb_SstFileReaderIterator.h"
 #include "rocksdb/iterator.h"
-#include "rocksjni/portal.h"
+#include "portal.h"
 
 /*
  * Class:     org_rocksdb_SstFileReaderIterator

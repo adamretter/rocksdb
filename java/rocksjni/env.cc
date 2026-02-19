@@ -12,12 +12,12 @@
 
 #include <vector>
 
-#include "include/org_rocksdb_Env.h"
-#include "include/org_rocksdb_RocksEnv.h"
-#include "include/org_rocksdb_RocksMemEnv.h"
-#include "include/org_rocksdb_TimedEnv.h"
+#include "org_rocksdb_Env.h"
+#include "org_rocksdb_RocksEnv.h"
+#include "org_rocksdb_RocksMemEnv.h"
+#include "org_rocksdb_TimedEnv.h"
 #include "portal.h"
-#include "rocksjni/cplusplus_to_java_convert.h"
+#include "cplusplus_to_java_convert.h"
 
 /*
  * Class:     org_rocksdb_Env

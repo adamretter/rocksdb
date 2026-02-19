@@ -13,10 +13,10 @@
 #include <memory>
 #include <set>
 
-#include "include/org_rocksdb_Statistics.h"
-#include "rocksjni/cplusplus_to_java_convert.h"
-#include "rocksjni/portal.h"
-#include "rocksjni/statisticsjni.h"
+#include "org_rocksdb_Statistics.h"
+#include "cplusplus_to_java_convert.h"
+#include "portal.h"
+#include "statisticsjni.h"
 
 /*
  * Class:     org_rocksdb_Statistics

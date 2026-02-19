@@ -12,11 +12,11 @@
 
 #include <string>
 
-#include "include/org_rocksdb_BloomFilter.h"
-#include "include/org_rocksdb_Filter.h"
+#include "org_rocksdb_BloomFilter.h"
+#include "org_rocksdb_Filter.h"
 #include "rocksdb/filter_policy.h"
-#include "rocksjni/cplusplus_to_java_convert.h"
-#include "rocksjni/portal.h"
+#include "cplusplus_to_java_convert.h"
+#include "portal.h"
 
 /*
  * Class:     org_rocksdb_BloomFilter

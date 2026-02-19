@@ -6,9 +6,9 @@
 // This file implements the callback "bridge" between Java and C++ for
 // ROCKSDB_NAMESPACE::TraceWriter.
 
-#include "rocksjni/trace_writer_jnicallback.h"
+#include "trace_writer_jnicallback.h"
 
-#include "rocksjni/portal.h"
+#include "portal.h"
 
 namespace ROCKSDB_NAMESPACE {
 TraceWriterJniCallback::TraceWriterJniCallback(JNIEnv* env,

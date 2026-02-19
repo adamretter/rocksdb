@@ -6,9 +6,9 @@
 // This file implements the callback "bridge" between Java and C++ for
 // ROCKSDB_NAMESPACE::Comparator.
 
-#include "rocksjni/comparatorjnicallback.h"
+#include "comparatorjnicallback.h"
 
-#include "rocksjni/portal.h"
+#include "portal.h"
 
 namespace ROCKSDB_NAMESPACE {
 ComparatorJniCallback::ComparatorJniCallback(

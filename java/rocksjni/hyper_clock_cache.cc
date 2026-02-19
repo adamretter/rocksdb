@@ -9,8 +9,8 @@
 #include <jni.h>
 
 #include "cache/clock_cache.h"
-#include "include/org_rocksdb_HyperClockCache.h"
-#include "rocksjni/cplusplus_to_java_convert.h"
+#include "org_rocksdb_HyperClockCache.h"
+#include "cplusplus_to_java_convert.h"
 
 /*
  * Class:     org_rocksdb_HyperClockCache

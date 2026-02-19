@@ -5,8 +5,8 @@
 
 #include <jni.h>
 
-#include "include/org_rocksdb_RemoveEmptyValueCompactionFilter.h"
-#include "rocksjni/cplusplus_to_java_convert.h"
+#include "org_rocksdb_RemoveEmptyValueCompactionFilter.h"
+#include "cplusplus_to_java_convert.h"
 #include "utilities/compaction_filters/remove_emptyvalue_compactionfilter.h"
 
 /*

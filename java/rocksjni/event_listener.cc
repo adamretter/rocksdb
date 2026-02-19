@@ -10,10 +10,10 @@
 
 #include <memory>
 
-#include "include/org_rocksdb_AbstractEventListener.h"
-#include "rocksjni/cplusplus_to_java_convert.h"
-#include "rocksjni/event_listener_jnicallback.h"
-#include "rocksjni/portal.h"
+#include "org_rocksdb_AbstractEventListener.h"
+#include "cplusplus_to_java_convert.h"
+#include "event_listener_jnicallback.h"
+#include "portal.h"
 
 /*
  * Class:     org_rocksdb_AbstractEventListener

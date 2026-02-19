@@ -10,8 +10,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "include/org_rocksdb_ColumnFamilyHandle.h"
-#include "rocksjni/portal.h"
+#include "org_rocksdb_ColumnFamilyHandle.h"
+#include "portal.h"
 
 /*
  * Class:     org_rocksdb_ColumnFamilyHandle

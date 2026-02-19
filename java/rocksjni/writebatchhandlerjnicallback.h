@@ -15,7 +15,7 @@
 #include <memory>
 
 #include "rocksdb/write_batch.h"
-#include "rocksjni/jnicallback.h"
+#include "jnicallback.h"
 
 namespace ROCKSDB_NAMESPACE {
 /**

@@ -8,10 +8,10 @@
 
 #include <jni.h>
 
-#include "include/org_rocksdb_CompactionOptionsUniversal.h"
+#include "org_rocksdb_CompactionOptionsUniversal.h"
 #include "rocksdb/advanced_options.h"
-#include "rocksjni/cplusplus_to_java_convert.h"
-#include "rocksjni/portal.h"
+#include "cplusplus_to_java_convert.h"
+#include "portal.h"
 
 /*
  * Class:     org_rocksdb_CompactionOptionsUniversal

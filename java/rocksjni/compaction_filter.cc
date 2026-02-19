@@ -10,7 +10,7 @@
 
 #include <jni.h>
 
-#include "include/org_rocksdb_AbstractCompactionFilter.h"
+#include "org_rocksdb_AbstractCompactionFilter.h"
 
 // <editor-fold desc="org.rocksdb.AbstractCompactionFilter">
 

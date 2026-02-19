@@ -14,11 +14,11 @@
 
 #include <string>
 
-#include "include/org_rocksdb_AbstractSlice.h"
-#include "include/org_rocksdb_DirectSlice.h"
-#include "include/org_rocksdb_Slice.h"
-#include "rocksjni/cplusplus_to_java_convert.h"
-#include "rocksjni/portal.h"
+#include "org_rocksdb_AbstractSlice.h"
+#include "org_rocksdb_DirectSlice.h"
+#include "org_rocksdb_Slice.h"
+#include "cplusplus_to_java_convert.h"
+#include "portal.h"
 
 // <editor-fold desc="org.rocksdb.AbstractSlice>
 

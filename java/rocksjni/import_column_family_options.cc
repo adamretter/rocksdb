@@ -6,9 +6,9 @@
 
 #include <jni.h>
 
-#include "include/org_rocksdb_ImportColumnFamilyOptions.h"
+#include "org_rocksdb_ImportColumnFamilyOptions.h"
 #include "rocksdb/options.h"
-#include "rocksjni/cplusplus_to_java_convert.h"
+#include "cplusplus_to_java_convert.h"
 
 /*
  * Class:     org_rocksdb_ImportColumnFamilyOptions

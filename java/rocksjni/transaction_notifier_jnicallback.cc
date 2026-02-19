@@ -6,10 +6,10 @@
 // This file implements the callback "bridge" between Java and C++ for
 // ROCKSDB_NAMESPACE::TransactionNotifier.
 
-#include "rocksjni/transaction_notifier_jnicallback.h"
+#include "transaction_notifier_jnicallback.h"
 
-#include "rocksjni/cplusplus_to_java_convert.h"
-#include "rocksjni/portal.h"
+#include "cplusplus_to_java_convert.h"
+#include "portal.h"
 
 namespace ROCKSDB_NAMESPACE {
 

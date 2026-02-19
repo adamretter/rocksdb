@@ -6,14 +6,14 @@
 // This file implements the callback "bridge" between Java and C++ for
 // ROCKSDB_NAMESPACE::Logger.
 
-#include "rocksjni/loggerjnicallback.h"
+#include "loggerjnicallback.h"
 
 #include <cstdarg>
 #include <cstdio>
 
-#include "include/org_rocksdb_Logger.h"
-#include "rocksjni/cplusplus_to_java_convert.h"
-#include "rocksjni/portal.h"
+#include "org_rocksdb_Logger.h"
+#include "cplusplus_to_java_convert.h"
+#include "portal.h"
 
 namespace ROCKSDB_NAMESPACE {
 

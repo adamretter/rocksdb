@@ -5,10 +5,10 @@
 
 #include <jni.h>
 
-#include "include/org_rocksdb_RocksDBExceptionTest.h"
+#include "org_rocksdb_RocksDBExceptionTest.h"
 #include "rocksdb/slice.h"
 #include "rocksdb/status.h"
-#include "rocksjni/portal.h"
+#include "portal.h"
 
 /*
  * Class:     org_rocksdb_RocksDBExceptionTest

@@ -10,9 +10,9 @@
 
 #include <memory>
 
-#include "include/org_rocksdb_AbstractCompactionFilterFactory.h"
-#include "rocksjni/compaction_filter_factory_jnicallback.h"
-#include "rocksjni/cplusplus_to_java_convert.h"
+#include "org_rocksdb_AbstractCompactionFilterFactory.h"
+#include "compaction_filter_factory_jnicallback.h"
+#include "cplusplus_to_java_convert.h"
 
 /*
  * Class:     org_rocksdb_AbstractCompactionFilterFactory

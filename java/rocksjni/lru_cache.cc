@@ -10,8 +10,8 @@
 
 #include <jni.h>
 
-#include "include/org_rocksdb_LRUCache.h"
-#include "rocksjni/cplusplus_to_java_convert.h"
+#include "org_rocksdb_LRUCache.h"
+#include "cplusplus_to_java_convert.h"
 
 /*
  * Class:     org_rocksdb_LRUCache

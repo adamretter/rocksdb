@@ -12,8 +12,8 @@
 #include <unordered_set>
 #include <vector>
 
-#include "include/org_rocksdb_MemoryUtil.h"
-#include "rocksjni/portal.h"
+#include "org_rocksdb_MemoryUtil.h"
+#include "portal.h"
 
 /*
  * Class:     org_rocksdb_MemoryUtil

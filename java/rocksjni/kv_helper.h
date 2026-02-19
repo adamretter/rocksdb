@@ -18,7 +18,7 @@
 #include "rocksdb/rocksdb_namespace.h"
 #include "rocksdb/slice.h"
 #include "rocksdb/status.h"
-#include "rocksjni/portal.h"
+#include "portal.h"
 
 namespace ROCKSDB_NAMESPACE {
 

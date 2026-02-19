@@ -12,7 +12,7 @@
 #include <jni.h>
 
 #include "rocksdb/utilities/transaction.h"
-#include "rocksjni/jnicallback.h"
+#include "jnicallback.h"
 
 namespace ROCKSDB_NAMESPACE {
 

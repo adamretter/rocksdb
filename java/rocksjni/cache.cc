@@ -8,7 +8,7 @@
 
 #include <jni.h>
 
-#include "include/org_rocksdb_Cache.h"
+#include "org_rocksdb_Cache.h"
 #include "rocksdb/advanced_cache.h"
 
 /*

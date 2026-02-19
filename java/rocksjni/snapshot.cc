@@ -9,9 +9,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "include/org_rocksdb_Snapshot.h"
+#include "org_rocksdb_Snapshot.h"
 #include "rocksdb/db.h"
-#include "rocksjni/portal.h"
+#include "portal.h"
 
 /*
  * Class:     org_rocksdb_Snapshot

@@ -5,8 +5,8 @@
 
 #include <jni.h>
 
-#include "include/org_rocksdb_CassandraCompactionFilter.h"
-#include "rocksjni/cplusplus_to_java_convert.h"
+#include "org_rocksdb_CassandraCompactionFilter.h"
+#include "cplusplus_to_java_convert.h"
 #include "utilities/cassandra/cassandra_compaction_filter.h"
 
 /*

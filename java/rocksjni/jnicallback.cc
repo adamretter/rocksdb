@@ -6,11 +6,11 @@
 // This file implements the callback "bridge" between Java and C++ for
 // JNI Callbacks from C++ to sub-classes or org.rocksdb.RocksCallbackObject
 
-#include "rocksjni/jnicallback.h"
+#include "jnicallback.h"
 
 #include <assert.h>
 
-#include "rocksjni/portal.h"
+#include "portal.h"
 
 namespace ROCKSDB_NAMESPACE {
 JniCallback::JniCallback(JNIEnv* env, jobject jcallback_obj) {

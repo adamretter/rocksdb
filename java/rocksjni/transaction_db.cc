@@ -14,11 +14,11 @@
 #include <memory>
 #include <utility>
 
-#include "include/org_rocksdb_TransactionDB.h"
+#include "org_rocksdb_TransactionDB.h"
 #include "rocksdb/options.h"
 #include "rocksdb/utilities/transaction.h"
-#include "rocksjni/cplusplus_to_java_convert.h"
-#include "rocksjni/portal.h"
+#include "cplusplus_to_java_convert.h"
+#include "portal.h"
 
 /*
  * Class:     org_rocksdb_TransactionDB

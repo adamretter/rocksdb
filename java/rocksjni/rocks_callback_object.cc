@@ -8,7 +8,7 @@
 
 #include <jni.h>
 
-#include "include/org_rocksdb_RocksCallbackObject.h"
+#include "org_rocksdb_RocksCallbackObject.h"
 #include "jnicallback.h"
 
 /*

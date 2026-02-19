@@ -8,9 +8,9 @@
 
 #include <jni.h>
 
-#include "include/org_rocksdb_AbstractWalFilter.h"
-#include "rocksjni/cplusplus_to_java_convert.h"
-#include "rocksjni/wal_filter_jnicallback.h"
+#include "org_rocksdb_AbstractWalFilter.h"
+#include "cplusplus_to_java_convert.h"
+#include "wal_filter_jnicallback.h"
 
 /*
  * Class:     org_rocksdb_AbstractWalFilter

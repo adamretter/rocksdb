@@ -10,12 +10,12 @@
 
 #include <jni.h>
 
-#include "include/org_rocksdb_BlockBasedTableConfig.h"
-#include "include/org_rocksdb_PlainTableConfig.h"
+#include "org_rocksdb_BlockBasedTableConfig.h"
+#include "org_rocksdb_PlainTableConfig.h"
 #include "portal.h"
 #include "rocksdb/cache.h"
 #include "rocksdb/filter_policy.h"
-#include "rocksjni/cplusplus_to_java_convert.h"
+#include "cplusplus_to_java_convert.h"
 
 /*
  * Class:     org_rocksdb_PlainTableConfig

@@ -6,9 +6,9 @@
 // This file implements the callback "bridge" between Java and C++ for
 // ROCKSDB_NAMESPACE::Comparator.
 
-#include "rocksjni/writebatchhandlerjnicallback.h"
+#include "writebatchhandlerjnicallback.h"
 
-#include "rocksjni/portal.h"
+#include "portal.h"
 
 namespace ROCKSDB_NAMESPACE {
 WriteBatchHandlerJniCallback::WriteBatchHandlerJniCallback(
@@ -414,11 +414,13 @@ std::unique_ptr<ROCKSDB_NAMESPACE::Status> WriteBatchHandlerJniCallback::kv_op(
     const Slice& key, const Slice& value,
     std::function<void(jbyteArray, jbyteArray)> kvFn) {
   const jbyteArray j_key = JniUtil::copyBytes(m_env, key);
+
+  // exception thrown
+  if (m_env->ExceptionCheck()) {
+    m_env->ExceptionDescribe();
+  }
+
   if (j_key == nullptr) {
-    // exception thrown
-    if (m_env->ExceptionCheck()) {
-      m_env->ExceptionDescribe();
-    }
     return nullptr;
   }
 

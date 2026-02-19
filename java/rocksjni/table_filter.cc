@@ -10,9 +10,9 @@
 
 #include <memory>
 
-#include "include/org_rocksdb_AbstractTableFilter.h"
-#include "rocksjni/cplusplus_to_java_convert.h"
-#include "rocksjni/table_filter_jnicallback.h"
+#include "org_rocksdb_AbstractTableFilter.h"
+#include "cplusplus_to_java_convert.h"
+#include "table_filter_jnicallback.h"
 
 /*
  * Class:     org_rocksdb_AbstractTableFilter

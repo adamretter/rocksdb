@@ -4,10 +4,10 @@
 //  COPYING file in the root directory) and Apache 2.0 License
 //  (found in the LICENSE.Apache file in the root directory).
 
-#include "java/rocksjni/table_properties_collector_factory.h"
+#include "table_properties_collector_factory.h"
 
-#include "java/include/org_rocksdb_TablePropertiesCollectorFactory.h"
-#include "java/rocksjni/cplusplus_to_java_convert.h"
+#include "org_rocksdb_TablePropertiesCollectorFactory.h"
+#include "cplusplus_to_java_convert.h"
 #include "rocksdb/db.h"
 #include "rocksdb/utilities/table_properties_collectors.h"
 

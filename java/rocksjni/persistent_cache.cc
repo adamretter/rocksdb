@@ -12,10 +12,10 @@
 
 #include <string>
 
-#include "include/org_rocksdb_PersistentCache.h"
+#include "org_rocksdb_PersistentCache.h"
 #include "loggerjnicallback.h"
 #include "portal.h"
-#include "rocksjni/cplusplus_to_java_convert.h"
+#include "cplusplus_to_java_convert.h"
 
 /*
  * Class:     org_rocksdb_PersistentCache

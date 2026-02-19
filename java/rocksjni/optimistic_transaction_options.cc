@@ -8,10 +8,10 @@
 
 #include <jni.h>
 
-#include "include/org_rocksdb_OptimisticTransactionOptions.h"
+#include "org_rocksdb_OptimisticTransactionOptions.h"
 #include "rocksdb/comparator.h"
 #include "rocksdb/utilities/optimistic_transaction_db.h"
-#include "rocksjni/cplusplus_to_java_convert.h"
+#include "cplusplus_to_java_convert.h"
 
 /*
  * Class:     org_rocksdb_OptimisticTransactionOptions

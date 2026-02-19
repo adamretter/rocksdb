@@ -6,9 +6,9 @@
 // This file implements the callback "bridge" between Java and C++ for
 // ROCKSDB_NAMESPACE::EventListener.
 
-#include "rocksjni/event_listener_jnicallback.h"
+#include "event_listener_jnicallback.h"
 
-#include "rocksjni/portal.h"
+#include "portal.h"
 
 namespace ROCKSDB_NAMESPACE {
 EventListenerJniCallback::EventListenerJniCallback(
@@ -468,12 +468,13 @@ jobject EventListenerJniCallback::SetupCallbackInvocation(
 void EventListenerJniCallback::CleanupCallbackInvocation(
     JNIEnv* env, jboolean attached_thread,
     std::initializer_list<jobject*> refs) {
+  jboolean exception_thrown = env->ExceptionCheck();
   for (auto* ref : refs) {
     if (*ref == nullptr) continue;
     env->DeleteLocalRef(*ref);
   }
 
-  if (env->ExceptionCheck()) {
+  if (exception_thrown) {
     // exception thrown from CallVoidMethod
     env->ExceptionDescribe();  // print out exception to stderr
   }

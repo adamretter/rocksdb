@@ -149,7 +149,7 @@ most processors made since roughly 2013.
     * Install the dependencies for RocksJava (optional):
 
         export BATCH=yes
-        cd /usr/ports/java/openjdk7 && make install
+        cd /usr/ports/java/openjdk8 && make install
 
     * Build RocksDB from source:
         cd ~
@@ -159,7 +159,7 @@ most processors made since roughly 2013.
 
     * Build RocksJava from source (optional):
         cd rocksdb
-        export JAVA_HOME=/usr/local/openjdk7
+        export JAVA_HOME=/usr/local/openjdk8
         gmake rocksdbjava
 
 * **OpenBSD** (6.3/-current):

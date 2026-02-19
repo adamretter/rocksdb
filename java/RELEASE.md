@@ -1,20 +1,21 @@
 ## Cross-building
 
-RocksDB can be built as a single self contained cross-platform JAR. The cross-platform jar can be used on any 64-bit OSX system, 32-bit Linux system, or 64-bit Linux system.
+RocksDB can be built as a single self-contained cross-platform JAR. The cross-platform jar can be used on any 64-bit macOS/Windows/Linux system, or 32-bit Linux system.
 
 Building a cross-platform JAR requires:
 
  * [Docker](https://www.docker.com/docker-community)
- * A Mac OSX machine that can compile RocksDB.
- * Java 7 set as JAVA_HOME.
+ * A macOS machine that can compile RocksDB.
+ * Java 8 set as JAVA_HOME.
+ * Apache Maven 3.9.0+
 
 Once you have these items, run this make command from RocksDB's root source directory:
 
     make jclean clean rocksdbjavastaticreleasedocker
 
-This command will build RocksDB natively on OSX, and will then spin up docker containers to build RocksDB for 32-bit and 64-bit Linux with glibc, and 32-bit and 64-bit Linux with musl libc.
+This command will build RocksDB natively on macOS, and will then spin up Docker containers to build RocksDB for 32-bit and 64-bit Linux with glibc, and 32-bit and 64-bit Linux with musl libc.
 
-You can find all native binaries and JARs in the java/target directory upon completion:
+You can find all native binaries and JARs in the java/target-native directory upon completion:
 
     librocksdbjni-linux32.so
     librocksdbjni-linux64.so
@@ -34,26 +35,26 @@ Where x.y.z is the built version number of RocksDB.
 
 ## Maven publication
 
-Set ~/.m2/settings.xml to contain:
+Your `~/.m2/settings.xml` should contain within its `<servers>` element:
 
-    <settings xmlns="http://maven.apache.org/SETTINGS/1.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.0.0 http://maven.apache.org/xsd/settings-1.0.0.xsd">
-      <servers>
-        <server>
-          <id>sonatype-nexus-staging</id>
-          <username>your-sonatype-jira-username</username>
-          <password>your-sonatype-jira-password</password>
-        </server>
-      </servers>
-    </settings>
+```xml
+    <server>
+      <id>central</id>
+      <username>your-maven-central-username</username>
+      <password>your-maven-central-token</password>
+    </server>
+```
 
-From RocksDB's root directory, first build the Java static JARs:
+From RocksDB's root directory:
 
-    make jclean clean rocksdbjavastaticpublish
+    make rocksdbjavastaticpublish
 
-This command will [stage the JAR artifacts on the Sonatype staging repository](http://central.sonatype.org/pages/manual-staging-bundle-creation-and-deployment.html). To release the staged artifacts.
+This command will [stage the JAR artifacts on Maven Central repository](https://central.sonatype.com/).
 
-1. Go to [https://oss.sonatype.org/#stagingRepositories](https://oss.sonatype.org/#stagingRepositories) and search for "rocksdb" in the upper right hand search box.
-2. Select the rocksdb staging repository, and inspect its contents.
-3. If all is well, follow [these steps](https://oss.sonatype.org/#stagingRepositories) to close the repository and release it.
+To release the staged artifacts:
+
+1. Go to [https://central.sonatype.com/publishing](https://central.sonatype.com/publishing) and look for a new entry for `rocksdbjni-x.y.x` on the left-hand-side of the page under Deployments.
+2. Select the rocksdbjni-x.y.z deployment repository, and inspect its contents.
+3. Click the `Publish` button on the right-hand-side of the page.
 
 After the release has occurred, the artifacts will be synced to Maven central within 24-48 hours.

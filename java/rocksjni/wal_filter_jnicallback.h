@@ -16,7 +16,7 @@
 #include <string>
 
 #include "rocksdb/wal_filter.h"
-#include "rocksjni/jnicallback.h"
+#include "jnicallback.h"
 
 namespace ROCKSDB_NAMESPACE {
 

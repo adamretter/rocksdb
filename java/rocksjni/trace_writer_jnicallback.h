@@ -14,7 +14,7 @@
 #include <memory>
 
 #include "rocksdb/trace_reader_writer.h"
-#include "rocksjni/jnicallback.h"
+#include "jnicallback.h"
 
 namespace ROCKSDB_NAMESPACE {
 

@@ -6,10 +6,10 @@
 // This file implements the callback "bridge" between Java and C++ for
 // ROCKSDB_NAMESPACE::WalFilter.
 
-#include "rocksjni/wal_filter_jnicallback.h"
+#include "wal_filter_jnicallback.h"
 
-#include "rocksjni/cplusplus_to_java_convert.h"
-#include "rocksjni/portal.h"
+#include "cplusplus_to_java_convert.h"
+#include "portal.h"
 
 namespace ROCKSDB_NAMESPACE {
 WalFilterJniCallback::WalFilterJniCallback(JNIEnv* env, jobject jwal_filter)
@@ -80,10 +80,11 @@ void WalFilterJniCallback::ColumnFamilyLogNumberMap(
   env->CallVoidMethod(m_jcallback_obj, m_column_family_log_number_map_mid,
                       jcf_lognumber_map, jcf_name_id_map);
 
+jboolean exception_thrown = env->ExceptionCheck();
   env->DeleteLocalRef(jcf_lognumber_map);
   env->DeleteLocalRef(jcf_name_id_map);
 
-  if (env->ExceptionCheck()) {
+  if (exception_thrown) {
     // exception thrown from CallVoidMethod
     env->ExceptionDescribe();  // print out exception to stderr
   }
@@ -113,9 +114,11 @@ WalFilter::WalProcessingOption WalFilterJniCallback::LogRecordFound(
       static_cast<jlong>(log_number), jlog_file_name,
       GET_CPLUSPLUS_POINTER(&batch), GET_CPLUSPLUS_POINTER(new_batch));
 
+  jboolean exception_thrown = env->ExceptionCheck();
+
   env->DeleteLocalRef(jlog_file_name);
 
-  if (env->ExceptionCheck()) {
+  if (exception_thrown) {
     // exception thrown from CallShortMethod
     env->ExceptionDescribe();  // print out exception to stderr
     releaseJniEnv(attached_thread);

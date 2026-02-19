@@ -11,17 +11,17 @@
 
 #include "db/memtable.h"
 #include "db/write_batch_internal.h"
-#include "include/org_rocksdb_WriteBatch.h"
-#include "include/org_rocksdb_WriteBatch_Handler.h"
+#include "org_rocksdb_WriteBatch.h"
+#include "org_rocksdb_WriteBatch_Handler.h"
 #include "logging/logging.h"
 #include "rocksdb/db.h"
 #include "rocksdb/env.h"
 #include "rocksdb/memtablerep.h"
 #include "rocksdb/status.h"
 #include "rocksdb/write_buffer_manager.h"
-#include "rocksjni/cplusplus_to_java_convert.h"
-#include "rocksjni/portal.h"
-#include "rocksjni/writebatchhandlerjnicallback.h"
+#include "cplusplus_to_java_convert.h"
+#include "portal.h"
+#include "writebatchhandlerjnicallback.h"
 
 /*
  * Class:     org_rocksdb_WriteBatch

@@ -7,7 +7,7 @@
 #include <iostream>
 #include <utility>
 
-#include "include/org_rocksdb_test_TestableEventListener.h"
+#include "org_rocksdb_test_TestableEventListener.h"
 #include "rocksdb/listener.h"
 #include "rocksdb/status.h"
 #include "rocksdb/table_properties.h"

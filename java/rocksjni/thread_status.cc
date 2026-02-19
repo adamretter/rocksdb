@@ -10,7 +10,7 @@
 
 #include <jni.h>
 
-#include "include/org_rocksdb_ThreadStatus.h"
+#include "org_rocksdb_ThreadStatus.h"
 #include "portal.h"
 
 /*

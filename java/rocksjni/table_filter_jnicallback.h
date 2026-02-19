@@ -15,7 +15,7 @@
 #include <memory>
 
 #include "rocksdb/table_properties.h"
-#include "rocksjni/jnicallback.h"
+#include "jnicallback.h"
 
 namespace ROCKSDB_NAMESPACE {
 

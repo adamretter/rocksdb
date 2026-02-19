@@ -11,13 +11,13 @@
 
 #include <string>
 
-#include "include/org_rocksdb_SstFileReader.h"
+#include "org_rocksdb_SstFileReader.h"
 #include "rocksdb/comparator.h"
 #include "rocksdb/env.h"
 #include "rocksdb/options.h"
 #include "rocksdb/sst_file_reader.h"
-#include "rocksjni/cplusplus_to_java_convert.h"
-#include "rocksjni/portal.h"
+#include "cplusplus_to_java_convert.h"
+#include "portal.h"
 
 /*
  * Class:     org_rocksdb_SstFileReader

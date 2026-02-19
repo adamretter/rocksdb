@@ -17,7 +17,7 @@
 #include <tuple>
 #include <vector>
 
-#include "include/org_rocksdb_RocksDB.h"
+#include "org_rocksdb_RocksDB.h"
 #include "rocksdb/cache.h"
 #include "rocksdb/convenience.h"
 #include "rocksdb/db.h"
@@ -25,10 +25,10 @@
 #include "rocksdb/perf_context.h"
 #include "rocksdb/types.h"
 #include "rocksdb/version.h"
-#include "rocksjni/cplusplus_to_java_convert.h"
-#include "rocksjni/jni_multiget_helpers.h"
-#include "rocksjni/kv_helper.h"
-#include "rocksjni/portal.h"
+#include "cplusplus_to_java_convert.h"
+#include "jni_multiget_helpers.h"
+#include "kv_helper.h"
+#include "portal.h"
 
 #ifdef min
 #undef min

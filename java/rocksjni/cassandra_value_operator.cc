@@ -10,7 +10,7 @@
 #include <memory>
 #include <string>
 
-#include "include/org_rocksdb_CassandraValueMergeOperator.h"
+#include "org_rocksdb_CassandraValueMergeOperator.h"
 #include "rocksdb/db.h"
 #include "rocksdb/memtablerep.h"
 #include "rocksdb/merge_operator.h"
@@ -18,8 +18,8 @@
 #include "rocksdb/slice_transform.h"
 #include "rocksdb/statistics.h"
 #include "rocksdb/table.h"
-#include "rocksjni/cplusplus_to_java_convert.h"
-#include "rocksjni/portal.h"
+#include "cplusplus_to_java_convert.h"
+#include "portal.h"
 #include "utilities/cassandra/merge_operator.h"
 
 /*

@@ -12,10 +12,10 @@
 
 #include <string>
 
-#include "include/org_rocksdb_OptionsUtil.h"
+#include "org_rocksdb_OptionsUtil.h"
 #include "rocksdb/db.h"
 #include "rocksdb/env.h"
-#include "rocksjni/portal.h"
+#include "portal.h"
 
 void build_column_family_descriptor_list(
     JNIEnv* env, jobject jcfds,

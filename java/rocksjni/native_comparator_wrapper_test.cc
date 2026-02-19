@@ -7,10 +7,10 @@
 
 #include <string>
 
-#include "include/org_rocksdb_NativeComparatorWrapperTest_NativeStringComparatorWrapper.h"
+#include "org_rocksdb_NativeComparatorWrapperTest_NativeStringComparatorWrapper.h"
 #include "rocksdb/comparator.h"
 #include "rocksdb/slice.h"
-#include "rocksjni/cplusplus_to_java_convert.h"
+#include "cplusplus_to_java_convert.h"
 
 namespace ROCKSDB_NAMESPACE {
 

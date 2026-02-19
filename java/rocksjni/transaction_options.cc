@@ -8,9 +8,9 @@
 
 #include <jni.h>
 
-#include "include/org_rocksdb_TransactionOptions.h"
+#include "org_rocksdb_TransactionOptions.h"
 #include "rocksdb/utilities/transaction_db.h"
-#include "rocksjni/cplusplus_to_java_convert.h"
+#include "cplusplus_to_java_convert.h"
 
 /*
  * Class:     org_rocksdb_TransactionOptions

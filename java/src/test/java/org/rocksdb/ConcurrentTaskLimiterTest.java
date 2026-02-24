@@ -6,15 +6,15 @@
 
 package org.rocksdb;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
-import org.junit.After;
-import org.junit.Before;
-import org.junit.ClassRule;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.extension.RegisterExtension;
+import org.junit.jupiter.api.Test;
 
 public class ConcurrentTaskLimiterTest {
-  @ClassRule
+  @RegisterExtension
   public static final RocksNativeLibraryResource ROCKS_NATIVE_LIBRARY_RESOURCE =
       new RocksNativeLibraryResource();
 
@@ -22,7 +22,7 @@ public class ConcurrentTaskLimiterTest {
 
   private ConcurrentTaskLimiter concurrentTaskLimiter;
 
-  @Before
+  @BeforeEach
   public void beforeTest() {
     concurrentTaskLimiter = new ConcurrentTaskLimiterImpl(NAME, 3);
   }
@@ -49,7 +49,7 @@ public class ConcurrentTaskLimiterTest {
     assertEquals(0, concurrentTaskLimiter.outstandingTask());
   }
 
-  @After
+  @AfterEach
   public void afterTest() {
     concurrentTaskLimiter.close();
   }

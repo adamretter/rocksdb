@@ -11,7 +11,7 @@ import static org.assertj.core.api.Assertions.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class OptimisticTransactionTest extends AbstractTransactionTest {
   @Test
@@ -385,7 +385,7 @@ public class OptimisticTransactionTest extends AbstractTransactionTest {
     final OptimisticTransactionDB optimisticTxnDb;
     try {
       optimisticTxnDb = OptimisticTransactionDB.open(
-          options, dbFolder.getRoot().getAbsolutePath(),
+          options, dbFolder.getAbsolutePath(),
           columnFamilyDescriptors, columnFamilyHandles);
     } catch(final RocksDBException e) {
       columnFamilyOptions.close();

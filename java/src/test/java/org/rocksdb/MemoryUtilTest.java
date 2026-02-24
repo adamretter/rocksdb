@@ -5,10 +5,11 @@
 
 package org.rocksdb;
 
-import org.junit.ClassRule;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
+import java.io.File;
+
+import org.junit.jupiter.api.extension.RegisterExtension;
+import org.junit.jupiter.api.io.TempDir;
+import org.junit.jupiter.api.Test;
 
 import java.nio.charset.StandardCharsets;
 import java.util.*;
@@ -24,12 +25,12 @@ public class MemoryUtilTest {
   private final byte[] key = "some-key".getBytes(StandardCharsets.UTF_8);
   private final byte[] value = "some-value".getBytes(StandardCharsets.UTF_8);
 
-  @ClassRule
+  @RegisterExtension
   public static final RocksNativeLibraryResource ROCKS_NATIVE_LIBRARY_RESOURCE =
       new RocksNativeLibraryResource();
 
-  @Rule public TemporaryFolder dbFolder1 = new TemporaryFolder();
-  @Rule public TemporaryFolder dbFolder2 = new TemporaryFolder();
+  @TempDir public File dbFolder1;
+  @TempDir public File dbFolder2;
 
   /**
    * Test MemoryUtil.getApproximateMemoryUsageByType before and after a put + get
@@ -44,7 +45,7 @@ public class MemoryUtilTest {
          final FlushOptions flushOptions =
                  new FlushOptions().setWaitForFlush(true);
          final RocksDB db =
-                 RocksDB.open(options, dbFolder1.getRoot().getAbsolutePath())) {
+                 RocksDB.open(options, dbFolder1.getAbsolutePath())) {
       final List<RocksDB> dbs = new ArrayList<>(1);
       dbs.add(db);
       final Set<Cache> caches = new HashSet<>(1);
@@ -100,11 +101,11 @@ public class MemoryUtilTest {
     try (final Cache cache1 = new LRUCache(1024 * 1024);
          final Options options1 = new Options().setCreateIfMissing(true).setTableFormatConfig(
              new BlockBasedTableConfig().setBlockCache(cache1));
-         final RocksDB db1 = RocksDB.open(options1, dbFolder1.getRoot().getAbsolutePath());
+         final RocksDB db1 = RocksDB.open(options1, dbFolder1.getAbsolutePath());
          final Cache cache2 = new LRUCache(1024 * 1024);
          final Options options2 = new Options().setCreateIfMissing(true).setTableFormatConfig(
              new BlockBasedTableConfig().setBlockCache(cache2));
-         final RocksDB db2 = RocksDB.open(options2, dbFolder2.getRoot().getAbsolutePath());
+         final RocksDB db2 = RocksDB.open(options2, dbFolder2.getAbsolutePath());
          final FlushOptions flushOptions = new FlushOptions().setWaitForFlush(true)
 
     ) {

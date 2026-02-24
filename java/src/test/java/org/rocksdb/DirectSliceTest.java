@@ -4,15 +4,16 @@
 //  (found in the LICENSE.Apache file in the root directory).
 package org.rocksdb;
 
-import org.junit.ClassRule;
-import org.junit.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
+import org.junit.jupiter.api.Test;
 
 import java.nio.ByteBuffer;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 public class DirectSliceTest {
-  @ClassRule
+  @RegisterExtension
   public static final RocksNativeLibraryResource ROCKS_NATIVE_LIBRARY_RESOURCE =
       new RocksNativeLibraryResource();
 
@@ -54,22 +55,26 @@ public class DirectSliceTest {
     }
   }
 
-  @Test(expected = IllegalArgumentException.class)
+  @Test
   public void directSliceInitWithoutDirectAllocation() {
-    final byte[] data = "Some text".getBytes();
-    final ByteBuffer buffer = ByteBuffer.wrap(data);
-    try(final DirectSlice directSlice = new DirectSlice(buffer)) {
-      //no-op
-    }
+    assertThrows(IllegalArgumentException.class, () -> {
+        final byte[] data = "Some text".getBytes();
+        final ByteBuffer buffer = ByteBuffer.wrap(data);
+        try(final DirectSlice directSlice = new DirectSlice(buffer)) {
+          //no-op
+        }
+    });
   }
 
-  @Test(expected = IllegalArgumentException.class)
+  @Test
   public void directSlicePrefixInitWithoutDirectAllocation() {
-    final byte[] data = "Some text".getBytes();
-    final ByteBuffer buffer = ByteBuffer.wrap(data);
-    try(final DirectSlice directSlice = new DirectSlice(buffer, 4)) {
-      //no-op
-    }
+    assertThrows(IllegalArgumentException.class, () -> {
+        final byte[] data = "Some text".getBytes();
+        final ByteBuffer buffer = ByteBuffer.wrap(data);
+        try(final DirectSlice directSlice = new DirectSlice(buffer, 4)) {
+          //no-op
+        }
+    });
   }
 
   @Test

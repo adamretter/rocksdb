@@ -5,6 +5,8 @@
 
 package org.rocksdb;
 
+import java.io.File;
+
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -14,9 +16,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
 import java.util.function.Function;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
+import org.junit.jupiter.api.io.TempDir;
+import org.junit.jupiter.api.Test;
 
 /**
  * Base class of {@link TransactionTest} and {@link OptimisticTransactionTest}
@@ -27,8 +28,8 @@ public abstract class AbstractTransactionTest {
   protected static final Random rand = PlatformRandomHelper.
       getPlatformSpecificRandomFactory();
 
-  @Rule
-  public TemporaryFolder dbFolder = new TemporaryFolder();
+  @TempDir
+  public File dbFolder;
 
   public abstract DBContainer startDb()
       throws RocksDBException;

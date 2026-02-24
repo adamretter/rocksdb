@@ -4,21 +4,22 @@
 //  (found in the LICENSE.Apache file in the root directory).
 package org.rocksdb;
 
+import java.io.File;
+
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.*;
-import org.junit.ClassRule;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
+import org.junit.jupiter.api.extension.RegisterExtension;
+import org.junit.jupiter.api.io.TempDir;
+import org.junit.jupiter.api.Test;
 
 public class BlobOptionsTest {
-  @ClassRule
+  @RegisterExtension
   public static final RocksNativeLibraryResource ROCKS_NATIVE_LIBRARY_RESOURCE =
       new RocksNativeLibraryResource();
 
-  @Rule public TemporaryFolder dbFolder = new TemporaryFolder();
+  @TempDir public File dbFolder;
 
   final int minBlobSize = 65536;
   final int largeBlobSize = 65536 * 2;
@@ -32,7 +33,7 @@ public class BlobOptionsTest {
    */
   @SuppressWarnings("CallToStringConcatCanBeReplacedByOperator")
   private int countDBFiles(final String endsWith) {
-    return Objects.requireNonNull(dbFolder.getRoot().list((dir, name) -> name.endsWith(endsWith)))
+    return Objects.requireNonNull(dbFolder.list((dir, name) -> name.endsWith(endsWith)))
         .length;
   }
 
@@ -222,7 +223,7 @@ public class BlobOptionsTest {
                                      .setMinBlobSize(minBlobSize)
                                      .setEnableBlobFiles(true);
 
-         final RocksDB db = RocksDB.open(options, dbFolder.getRoot().getAbsolutePath())) {
+         final RocksDB db = RocksDB.open(options, dbFolder.getAbsolutePath())) {
       db.put(small_key("default"), small_value("default"));
       try (final FlushOptions flushOptions = new FlushOptions().setWaitForFlush(true)) {
         db.flush(flushOptions);
@@ -270,7 +271,7 @@ public class BlobOptionsTest {
     List<ColumnFamilyHandle> columnFamilyHandles = new ArrayList<>();
 
     try (final DBOptions dbOptions = new DBOptions().setCreateIfMissing(true);
-         final RocksDB db = RocksDB.open(dbOptions, dbFolder.getRoot().getAbsolutePath(),
+         final RocksDB db = RocksDB.open(dbOptions, dbFolder.getAbsolutePath(),
              columnFamilyDescriptors, columnFamilyHandles)) {
       db.put(columnFamilyHandles.get(0), small_key("default"), small_value("default"));
       try (final FlushOptions flushOptions = new FlushOptions().setWaitForFlush(true)) {
@@ -322,7 +323,7 @@ public class BlobOptionsTest {
       assertThat(columnFamilyDescriptor2.getOptions().enableBlobFiles()).isEqualTo(false);
 
       try (final DBOptions dbOptions = new DBOptions();
-           final RocksDB db = RocksDB.open(dbOptions, dbFolder.getRoot().getAbsolutePath(),
+           final RocksDB db = RocksDB.open(dbOptions, dbFolder.getAbsolutePath(),
                columnFamilyDescriptors, columnFamilyHandles)) {
         final MutableColumnFamilyOptions.MutableColumnFamilyOptionsBuilder builder1 =
             db.getOptions(columnFamilyHandles.get(1));

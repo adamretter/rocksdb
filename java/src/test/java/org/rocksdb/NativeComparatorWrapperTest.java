@@ -5,28 +5,29 @@
 
 package org.rocksdb;
 
-import static org.junit.Assert.assertEquals;
+import java.io.File;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Random;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
+import org.junit.jupiter.api.io.TempDir;
+import org.junit.jupiter.api.Test;
 
 public class NativeComparatorWrapperTest {
   static {
     RocksDB.loadLibrary();
   }
 
-  @Rule
-  public TemporaryFolder dbFolder = new TemporaryFolder();
+  @TempDir
+  public File dbFolder;
 
   private static final Random random = new Random();
 
   @Test
   public void rountrip() throws RocksDBException {
-    final String dbPath = dbFolder.getRoot().getAbsolutePath();
+    final String dbPath = dbFolder.getAbsolutePath();
     final int ITERATIONS = 1_000;
 
     final String[] storedKeys = new String[ITERATIONS];

@@ -8,11 +8,11 @@ package org.rocksdb;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.Random;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 
 public class TransactionOptionsTest {
-  @BeforeClass
+  @BeforeAll
   public static void beforeAll() {
     RocksDB.loadLibrary();
   }

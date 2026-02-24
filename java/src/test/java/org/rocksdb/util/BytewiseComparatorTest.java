@@ -5,10 +5,13 @@
 
 package org.rocksdb.util;
 
-import org.junit.ClassRule;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
+import java.nio.file.Files;
+
+import java.io.File;
+
+import org.junit.jupiter.api.extension.RegisterExtension;
+import org.junit.jupiter.api.io.TempDir;
+import org.junit.jupiter.api.Test;
 import org.rocksdb.*;
 
 import java.io.IOException;
@@ -17,7 +20,7 @@ import java.nio.file.*;
 import java.util.*;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.rocksdb.util.ByteUtil.bytes;
 
 /**
@@ -27,12 +30,12 @@ import static org.rocksdb.util.ByteUtil.bytes;
  */
 public class BytewiseComparatorTest {
 
-  @ClassRule
+  @RegisterExtension
   public static final RocksNativeLibraryResource ROCKS_NATIVE_LIBRARY_RESOURCE =
       new RocksNativeLibraryResource();
 
-  @Rule
-  public TemporaryFolder dbFolder = new TemporaryFolder();
+  @TempDir
+  public File dbFolder;
 
   private List<String> source_strings = Arrays.asList("b", "d", "f", "h", "j", "l");
   private List<String> interleaving_strings = Arrays.asList("a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m");
@@ -46,7 +49,7 @@ public class BytewiseComparatorTest {
       throws IOException, RocksDBException {
     for(int rand_seed = 301; rand_seed < 306; rand_seed++) {
       final Path dbDir =
-          FileSystems.getDefault().getPath(dbFolder.newFolder().getAbsolutePath());
+          FileSystems.getDefault().getPath(Files.createTempDirectory(dbFolder.toPath(), "java_vs_cpp_bytewiseComparator").toAbsolutePath().toString());
       try(final RocksDB db = openDatabase(dbDir,
           BuiltinComparator.BYTEWISE_COMPARATOR)) {
 
@@ -75,7 +78,7 @@ public class BytewiseComparatorTest {
       throws IOException, RocksDBException {
     for(int rand_seed = 301; rand_seed < 306; rand_seed++) {
       final Path dbDir =
-          FileSystems.getDefault().getPath(dbFolder.newFolder().getAbsolutePath());
+          FileSystems.getDefault().getPath(Files.createTempDirectory(dbFolder.toPath(), "java_vs_java_bytewiseComparator").toAbsolutePath().toString());
       try(final ComparatorOptions copt = new ComparatorOptions()
           .setUseDirectBuffer(false);
           final AbstractComparator comparator = new BytewiseComparator(copt);
@@ -106,7 +109,7 @@ public class BytewiseComparatorTest {
       throws IOException, RocksDBException {
     for(int rand_seed = 301; rand_seed < 306; rand_seed++) {
       final Path dbDir =
-          FileSystems.getDefault().getPath(dbFolder.newFolder().getAbsolutePath());
+          FileSystems.getDefault().getPath(Files.createTempDirectory(dbFolder.toPath(), "java_vs_cpp_directBytewiseComparator").toAbsolutePath().toString());
       try(final RocksDB db = openDatabase(dbDir,
           BuiltinComparator.BYTEWISE_COMPARATOR)) {
 
@@ -135,7 +138,7 @@ public class BytewiseComparatorTest {
       throws IOException, RocksDBException {
     for(int rand_seed = 301; rand_seed < 306; rand_seed++) {
       final Path dbDir =
-          FileSystems.getDefault().getPath(dbFolder.newFolder().getAbsolutePath());
+          FileSystems.getDefault().getPath(Files.createTempDirectory(dbFolder.toPath(), "java_vs_java_directBytewiseComparator").toAbsolutePath().toString());
       try (final ComparatorOptions copt = new ComparatorOptions()
            .setUseDirectBuffer(true);
           final AbstractComparator comparator = new BytewiseComparator(copt);
@@ -166,7 +169,7 @@ public class BytewiseComparatorTest {
       throws IOException, RocksDBException {
     for(int rand_seed = 301; rand_seed < 306; rand_seed++) {
       final Path dbDir =
-          FileSystems.getDefault().getPath(dbFolder.newFolder().getAbsolutePath());
+          FileSystems.getDefault().getPath(Files.createTempDirectory(dbFolder.toPath(), "java_vs_cpp_reverseBytewiseComparator").toAbsolutePath().toString());
       try(final RocksDB db = openDatabase(dbDir,
           BuiltinComparator.REVERSE_BYTEWISE_COMPARATOR)) {
 
@@ -195,7 +198,7 @@ public class BytewiseComparatorTest {
       throws IOException, RocksDBException {
     for(int rand_seed = 301; rand_seed < 306; rand_seed++) {
       final Path dbDir =
-          FileSystems.getDefault().getPath(dbFolder.newFolder().getAbsolutePath());
+          FileSystems.getDefault().getPath(Files.createTempDirectory(dbFolder.toPath(), "java_vs_java_reverseBytewiseComparator").toAbsolutePath().toString());
       try (final ComparatorOptions copt = new ComparatorOptions()
            .setUseDirectBuffer(false);
            final AbstractComparator comparator = new ReverseBytewiseComparator(copt);

@@ -5,26 +5,26 @@
 
 package org.rocksdb;
 
+import java.io.File;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
+import org.junit.jupiter.api.io.TempDir;
+import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
-public class OptimisticTransactionDBTest {
-
-  @Rule
-  public TemporaryFolder dbFolder = new TemporaryFolder();
+public class OptimisticTransactionDBTest {  @TempDir
+  public File dbFolder;
 
   @Test
   public void open() throws RocksDBException {
     try (final Options options = new Options().setCreateIfMissing(true);
          final OptimisticTransactionDB otdb = OptimisticTransactionDB.open(options,
-                 dbFolder.getRoot().getAbsolutePath())) {
+                 dbFolder.getAbsolutePath())) {
       assertThat(otdb).isNotNull();
     }
   }
@@ -43,7 +43,7 @@ public class OptimisticTransactionDBTest {
       final List<ColumnFamilyHandle> columnFamilyHandles = new ArrayList<>();
 
       try (final OptimisticTransactionDB otdb = OptimisticTransactionDB.open(dbOptions,
-               dbFolder.getRoot().getAbsolutePath(),
+               dbFolder.getAbsolutePath(),
                columnFamilyDescriptors, columnFamilyHandles)) {
         try {
           assertThat(otdb).isNotNull();
@@ -56,26 +56,28 @@ public class OptimisticTransactionDBTest {
     }
   }
 
-  @Test(expected = IllegalArgumentException.class)
+  @Test
   public void open_columnFamilies_no_default() throws RocksDBException {
-    try (final DBOptions dbOptions =
-             new DBOptions().setCreateIfMissing(true).setCreateMissingColumnFamilies(true);
-         final ColumnFamilyOptions myCfOpts = new ColumnFamilyOptions()) {
-      final List<ColumnFamilyDescriptor> columnFamilyDescriptors =
-          Collections.singletonList(new ColumnFamilyDescriptor("myCf".getBytes(), myCfOpts));
+    assertThrows(IllegalArgumentException.class, () -> {
+        try (final DBOptions dbOptions =
+                 new DBOptions().setCreateIfMissing(true).setCreateMissingColumnFamilies(true);
+             final ColumnFamilyOptions myCfOpts = new ColumnFamilyOptions()) {
+          final List<ColumnFamilyDescriptor> columnFamilyDescriptors =
+              Collections.singletonList(new ColumnFamilyDescriptor("myCf".getBytes(), myCfOpts));
 
-      final List<ColumnFamilyHandle> columnFamilyHandles = new ArrayList<>();
+          final List<ColumnFamilyHandle> columnFamilyHandles = new ArrayList<>();
 
-      OptimisticTransactionDB.open(dbOptions, dbFolder.getRoot().getAbsolutePath(),
-          columnFamilyDescriptors, columnFamilyHandles);
-    }
+          OptimisticTransactionDB.open(dbOptions, dbFolder.getAbsolutePath(),
+              columnFamilyDescriptors, columnFamilyHandles);
+        }
+    });
   }
 
   @Test
   public void beginTransaction() throws RocksDBException {
     try (final Options options = new Options().setCreateIfMissing(true);
          final OptimisticTransactionDB otdb = OptimisticTransactionDB.open(
-             options, dbFolder.getRoot().getAbsolutePath());
+             options, dbFolder.getAbsolutePath());
         final WriteOptions writeOptions = new WriteOptions()) {
 
       try(final Transaction txn = otdb.beginTransaction(writeOptions)) {
@@ -88,7 +90,7 @@ public class OptimisticTransactionDBTest {
   public void beginTransaction_transactionOptions() throws RocksDBException {
     try (final Options options = new Options().setCreateIfMissing(true);
          final OptimisticTransactionDB otdb = OptimisticTransactionDB.open(
-             options, dbFolder.getRoot().getAbsolutePath());
+             options, dbFolder.getAbsolutePath());
          final WriteOptions writeOptions = new WriteOptions();
          final OptimisticTransactionOptions optimisticTxnOptions =
              new OptimisticTransactionOptions()) {
@@ -104,7 +106,7 @@ public class OptimisticTransactionDBTest {
   public void beginTransaction_withOld() throws RocksDBException {
     try (final Options options = new Options().setCreateIfMissing(true);
          final OptimisticTransactionDB otdb = OptimisticTransactionDB.open(
-             options, dbFolder.getRoot().getAbsolutePath());
+             options, dbFolder.getAbsolutePath());
          final WriteOptions writeOptions = new WriteOptions()) {
 
       try(final Transaction txn = otdb.beginTransaction(writeOptions)) {
@@ -119,7 +121,7 @@ public class OptimisticTransactionDBTest {
       throws RocksDBException {
     try (final Options options = new Options().setCreateIfMissing(true);
          final OptimisticTransactionDB otdb = OptimisticTransactionDB.open(
-             options, dbFolder.getRoot().getAbsolutePath());
+             options, dbFolder.getAbsolutePath());
          final WriteOptions writeOptions = new WriteOptions();
          final OptimisticTransactionOptions optimisticTxnOptions =
              new OptimisticTransactionOptions()) {
@@ -136,7 +138,7 @@ public class OptimisticTransactionDBTest {
   public void baseDB() throws RocksDBException {
     try (final Options options = new Options().setCreateIfMissing(true);
          final OptimisticTransactionDB otdb = OptimisticTransactionDB.open(options,
-             dbFolder.getRoot().getAbsolutePath())) {
+             dbFolder.getAbsolutePath())) {
       assertThat(otdb).isNotNull();
       final RocksDB db = otdb.getBaseDB();
       assertThat(db).isNotNull();
@@ -148,7 +150,7 @@ public class OptimisticTransactionDBTest {
   public void otdbSimpleIterator() throws RocksDBException {
     try (final Options options = new Options().setCreateIfMissing(true).setMaxCompactionBytes(0);
          final OptimisticTransactionDB otdb =
-             OptimisticTransactionDB.open(options, dbFolder.getRoot().getAbsolutePath())) {
+             OptimisticTransactionDB.open(options, dbFolder.getAbsolutePath())) {
       otdb.put("keyI".getBytes(), "valueI".getBytes());
       try (final RocksIterator iterator = otdb.newIterator()) {
         iterator.seekToFirst();

@@ -5,27 +5,29 @@
 
 package org.rocksdb;
 
+import java.io.File;
+
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.fail;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+
 
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.stream.Stream;
-import org.junit.ClassRule;
-import org.junit.Ignore;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
+import org.junit.jupiter.api.extension.RegisterExtension;
+import org.junit.jupiter.api.io.TempDir;
+import org.junit.jupiter.api.Test;
 
 public class BlockBasedTableConfigTest {
 
-  @ClassRule
+  @RegisterExtension
   public static final RocksNativeLibraryResource ROCKS_NATIVE_LIBRARY_RESOURCE =
       new RocksNativeLibraryResource();
 
-  @Rule public TemporaryFolder dbFolder = new TemporaryFolder();
+  @TempDir public File dbFolder;
 
   @Test
   public void cacheIndexAndFilterBlocks() {
@@ -156,7 +158,7 @@ public class BlockBasedTableConfigTest {
 
   private String getOptionAsString(final Options options) throws Exception {
     options.setCreateIfMissing(true);
-    final String dbPath = dbFolder.getRoot().getAbsolutePath();
+    final String dbPath = dbFolder.getAbsolutePath();
     final String result;
     try (final RocksDB ignored = RocksDB.open(options, dbPath);
          final Stream<Path> pathStream = Files.walk(Paths.get(dbPath))) {
@@ -199,7 +201,7 @@ public class BlockBasedTableConfigTest {
                      .setStatistics(statistics)
                      .setTableFormatConfig(new BlockBasedTableConfig().setBlockCache(cache));
              final RocksDB db =
-                 RocksDB.open(options, dbFolder.getRoot().getAbsolutePath() + "/" + shard)) {
+                 RocksDB.open(options, dbFolder.getAbsolutePath() + "/" + shard)) {
           final byte[] key = "some-key".getBytes(StandardCharsets.UTF_8);
           final byte[] value = "some-value".getBytes(StandardCharsets.UTF_8);
 
@@ -225,7 +227,7 @@ public class BlockBasedTableConfigTest {
       }
     }) {
       try (final PersistentCache persistentCache =
-               new PersistentCache(Env.getDefault(), dbFolder.getRoot().getPath(), 1024 * 1024 * 100, logger, false);
+               new PersistentCache(Env.getDefault(), dbFolder.getPath(), 1024 * 1024 * 100, logger, false);
            final Options options = new Options().setTableFormatConfig(
                new BlockBasedTableConfig().setPersistentCache(persistentCache))) {
         assertThat(options.tableFactoryName()).isEqualTo("BlockBasedTable");
@@ -348,21 +350,25 @@ public class BlockBasedTableConfigTest {
     }
   }
 
-  @Test(expected = AssertionError.class)
+  @Test
   public void formatVersionFailNegative() {
-    final BlockBasedTableConfig blockBasedTableConfig = new BlockBasedTableConfig();
-    blockBasedTableConfig.setFormatVersion(-1);
+    assertThrows(AssertionError.class, () -> {
+        final BlockBasedTableConfig blockBasedTableConfig = new BlockBasedTableConfig();
+        blockBasedTableConfig.setFormatVersion(-1);
+    });
   }
 
-  @Test(expected = RocksDBException.class)
+  @Test
   public void invalidFormatVersion() throws RocksDBException {
-    final BlockBasedTableConfig blockBasedTableConfig =
-        new BlockBasedTableConfig().setFormatVersion(99999);
+    assertThrows(RocksDBException.class, () -> {
+        final BlockBasedTableConfig blockBasedTableConfig =
+            new BlockBasedTableConfig().setFormatVersion(99999);
 
-    try (final Options options = new Options().setTableFormatConfig(blockBasedTableConfig);
-         final RocksDB ignored = RocksDB.open(options, dbFolder.getRoot().getAbsolutePath())) {
-      fail("Opening the database with an invalid format_version should have raised an exception");
-    }
+        try (final Options options = new Options().setTableFormatConfig(blockBasedTableConfig);
+             final RocksDB ignored = RocksDB.open(options, dbFolder.getAbsolutePath())) {
+          fail("Opening the database with an invalid format_version should have raised an exception");
+        }
+    });
   }
 
   @Test

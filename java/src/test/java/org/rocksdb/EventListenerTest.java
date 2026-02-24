@@ -4,6 +4,8 @@
 //  (found in the LICENSE.Apache file in the root directory).
 package org.rocksdb;
 
+import java.io.File;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.nio.charset.StandardCharsets;
@@ -13,21 +15,18 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import org.assertj.core.api.AbstractObjectAssert;
 import org.assertj.core.api.ObjectAssert;
-import org.junit.Assume;
-import org.junit.ClassRule;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
+import org.junit.jupiter.api.extension.RegisterExtension;
+import org.junit.jupiter.api.io.TempDir;
+import org.junit.jupiter.api.Test;
 import org.rocksdb.AbstractEventListener.EnabledEventCallback;
 import org.rocksdb.test.TestableEventListener;
-import org.rocksdb.util.Environment;
 
 public class EventListenerTest {
-  @ClassRule
+  @RegisterExtension
   public static final RocksNativeLibraryResource ROCKS_NATIVE_LIBRARY_RESOURCE =
       new RocksNativeLibraryResource();
 
-  @Rule public TemporaryFolder dbFolder = new TemporaryFolder();
+  @TempDir public File dbFolder;
 
   public static final Random rand = PlatformRandomHelper.getPlatformSpecificRandomFactory();
 
@@ -35,7 +34,7 @@ public class EventListenerTest {
       throws RocksDBException {
     try (final Options opt =
              new Options().setCreateIfMissing(true).setListeners(Collections.singletonList(el));
-         final RocksDB db = RocksDB.open(opt, dbFolder.getRoot().getAbsolutePath())) {
+         final RocksDB db = RocksDB.open(opt, dbFolder.getAbsolutePath())) {
       assertThat(db).isNotNull();
       final byte[] value = new byte[24];
       rand.nextBytes(value);
@@ -96,7 +95,7 @@ public class EventListenerTest {
                                  .setWriteBufferSize(FILE_SIZE / 2)
                                  .setDisableAutoCompactions(true)
                                  .setLevelCompactionDynamicLevelBytes(false);
-         final RocksDB db = RocksDB.open(opt, dbFolder.getRoot().getAbsolutePath())) {
+         final RocksDB db = RocksDB.open(opt, dbFolder.getAbsolutePath())) {
       final int records = FILE_SIZE / (KEY_SIZE + VALUE_SIZE);
 
       // fill database with key/value pairs
@@ -137,7 +136,7 @@ public class EventListenerTest {
       throws RocksDBException {
     try (final Options opt =
              new Options().setCreateIfMissing(true).setListeners(Collections.singletonList(el));
-         final RocksDB db = RocksDB.open(opt, dbFolder.getRoot().getAbsolutePath())) {
+         final RocksDB db = RocksDB.open(opt, dbFolder.getAbsolutePath())) {
       assertThat(db).isNotNull();
       final byte[] value = new byte[24];
       rand.nextBytes(value);
@@ -207,7 +206,7 @@ public class EventListenerTest {
       throws RocksDBException {
     try (final Options opt =
              new Options().setCreateIfMissing(true).setListeners(Collections.singletonList(el));
-         final RocksDB db = RocksDB.open(opt, dbFolder.getRoot().getAbsolutePath())) {
+         final RocksDB db = RocksDB.open(opt, dbFolder.getAbsolutePath())) {
       assertThat(db).isNotNull();
       final byte[] value = new byte[24];
       rand.nextBytes(value);
@@ -237,7 +236,7 @@ public class EventListenerTest {
       throws RocksDBException {
     try (final Options opt =
              new Options().setCreateIfMissing(true).setListeners(Collections.singletonList(el));
-         final RocksDB db = RocksDB.open(opt, dbFolder.getRoot().getAbsolutePath())) {
+         final RocksDB db = RocksDB.open(opt, dbFolder.getAbsolutePath())) {
       assertThat(db).isNotNull();
       final String uuid = UUID.randomUUID().toString();
       final SstFileWriter sstFileWriter = new SstFileWriter(new EnvOptions(), opt);

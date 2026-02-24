@@ -4,7 +4,10 @@
 //  (found in the LICENSE.Apache file in the root directory).
 package org.rocksdb;
 
+import java.io.File;
+
 import static java.nio.charset.StandardCharsets.UTF_8;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.nio.BufferUnderflowException;
@@ -12,19 +15,21 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import org.junit.*;
-import org.junit.rules.ExpectedException;
-import org.junit.rules.TemporaryFolder;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
+import org.junit.jupiter.api.io.TempDir;
 
 public class KeyMayExistTest {
-  @ClassRule
+
+  @RegisterExtension
   public static final RocksNativeLibraryResource ROCKS_NATIVE_LIBRARY_RESOURCE =
       new RocksNativeLibraryResource();
 
-  @Rule
-  public TemporaryFolder dbFolder = new TemporaryFolder();
+  @TempDir
+  public File dbFolder;
 
-  @Rule public ExpectedException exceptionRule = ExpectedException.none();
 
   List<ColumnFamilyDescriptor> cfDescriptors;
   List<ColumnFamilyHandle> columnFamilyHandleList = new ArrayList<>();
@@ -37,7 +42,7 @@ public class KeyMayExistTest {
   byte[] sliceKey;
   byte[] sliceValue;
 
-  @Before
+  @BeforeEach
   public void before() throws RocksDBException {
     cfDescriptors = Arrays.asList(new ColumnFamilyDescriptor(RocksDB.DEFAULT_COLUMN_FAMILY),
         new ColumnFamilyDescriptor("new_cf".getBytes()));
@@ -45,7 +50,7 @@ public class KeyMayExistTest {
         new DBOptions().setCreateIfMissing(true).setCreateMissingColumnFamilies(true);
 
     db = RocksDB.open(
-        options, dbFolder.getRoot().getAbsolutePath(), cfDescriptors, columnFamilyHandleList);
+        options, dbFolder.getAbsolutePath(), cfDescriptors, columnFamilyHandleList);
 
     // Build the slice key
     final StringBuilder builder = new StringBuilder("prefix");
@@ -57,7 +62,7 @@ public class KeyMayExistTest {
     sliceValue = "slice value 0".getBytes(UTF_8);
   }
 
-  @After
+  @AfterEach
   public void after() {
     for (final ColumnFamilyHandle columnFamilyHandle : columnFamilyHandleList) {
       columnFamilyHandle.close();
@@ -286,9 +291,10 @@ public class KeyMayExistTest {
     valueBuffer.get(valueGet);
     assertThat(valueGet).isEqualTo(Arrays.copyOfRange(value, 0, value.length - 1));
 
-    exceptionRule.expect(BufferUnderflowException.class);
-    valueGet = new byte[value.length];
-    valueBuffer.get(valueGet);
+    assertThrows(BufferUnderflowException.class, () -> {
+      byte[] valueGet2 = new byte[value.length];
+      valueBuffer.get(valueGet2);
+    });
   }
 
   @Test
@@ -330,9 +336,10 @@ public class KeyMayExistTest {
       valueBuffer.get(valueGet);
       assertThat(valueGet).isEqualTo(Arrays.copyOfRange(value, 0, value.length - 1));
 
-      exceptionRule.expect(BufferUnderflowException.class);
-      valueGet = new byte[value.length];
-      valueBuffer.get(valueGet);
+      assertThrows(BufferUnderflowException.class, () -> {
+        byte[] valueGet2 = new byte[value.length];
+        valueBuffer.get(valueGet2);
+      });
     }
   }
 
@@ -347,10 +354,9 @@ public class KeyMayExistTest {
     keyBuffer.put(key, 0, key.length);
     keyBuffer.flip();
 
-    exceptionRule.expect(AssertionError.class);
-    exceptionRule.expectMessage(
-        "value ByteBuffer parameter cannot be null. If you do not need the value, use a different version of the method");
-    final KeyMayExist keyMayExist = db.keyMayExist(keyBuffer, null);
+    assertThrows(AssertionError.class, () -> {
+      db.keyMayExist(keyBuffer, null);
+    });
   }
 
   @Test
@@ -360,8 +366,8 @@ public class KeyMayExistTest {
     db.put(columnFamilyHandleList.get(1), "keyBBCF1".getBytes(UTF_8), "valueBBCF1".getBytes(UTF_8));
 
     // 0 is the default CF
-    byte[] key = "keyBBCF0".getBytes(UTF_8);
-    ByteBuffer keyBuffer = ByteBuffer.allocateDirect(key.length);
+    final byte[] key = "keyBBCF0".getBytes(UTF_8);
+    final ByteBuffer keyBuffer = ByteBuffer.allocateDirect(key.length);
     keyBuffer.put(key, 0, key.length);
     keyBuffer.flip();
 
@@ -372,22 +378,21 @@ public class KeyMayExistTest {
     assertThat(db.keyMayExist(columnFamilyHandleList.get(0), keyBuffer)).isEqualTo(true);
 
     // 1 is just a CF
-    key = "keyBBCF1".getBytes(UTF_8);
-    keyBuffer = ByteBuffer.allocateDirect(key.length);
-    keyBuffer.put(key, 0, key.length);
-    keyBuffer.flip();
+    final byte[] key1 = "keyBBCF1".getBytes(UTF_8);
+    final ByteBuffer keyBuffer1 = ByteBuffer.allocateDirect(key1.length);
+    keyBuffer1.put(key1, 0, key1.length);
+    keyBuffer1.flip();
 
-    assertThat(db.keyMayExist(keyBuffer)).isEqualTo(false);
-    keyBuffer.flip();
-    assertThat(db.keyMayExist(columnFamilyHandleList.get(1), keyBuffer)).isEqualTo(true);
-    keyBuffer.flip();
-    assertThat(db.keyMayExist(columnFamilyHandleList.get(0), keyBuffer)).isEqualTo(false);
-    keyBuffer.flip();
+    assertThat(db.keyMayExist(keyBuffer1)).isEqualTo(false);
+    keyBuffer1.flip();
+    assertThat(db.keyMayExist(columnFamilyHandleList.get(1), keyBuffer1)).isEqualTo(true);
+    keyBuffer1.flip();
+    assertThat(db.keyMayExist(columnFamilyHandleList.get(0), keyBuffer1)).isEqualTo(false);
+    keyBuffer1.flip();
 
-    exceptionRule.expect(AssertionError.class);
-    exceptionRule.expectMessage(
-        "value ByteBuffer parameter cannot be null. If you do not need the value, use a different version of the method");
-    final KeyMayExist keyMayExist = db.keyMayExist(columnFamilyHandleList.get(0), keyBuffer, null);
+    assertThrows(AssertionError.class, () -> {
+      db.keyMayExist(columnFamilyHandleList.get(0), keyBuffer1, null);
+    });
   }
 
   @Test
@@ -397,8 +402,8 @@ public class KeyMayExistTest {
     db.put(columnFamilyHandleList.get(1), "keyBBCF1".getBytes(UTF_8), "valueBBCF1".getBytes(UTF_8));
 
     // 0 is the default CF
-    byte[] key = "keyBBCF0".getBytes(UTF_8);
-    ByteBuffer keyBuffer = ByteBuffer.allocateDirect(key.length);
+    final byte[] key = "keyBBCF0".getBytes(UTF_8);
+    final ByteBuffer keyBuffer = ByteBuffer.allocateDirect(key.length);
     keyBuffer.put(key, 0, key.length);
     keyBuffer.flip();
 
@@ -412,24 +417,22 @@ public class KeyMayExistTest {
           .isEqualTo(true);
 
       // 1 is just a CF
-      key = "keyBBCF1".getBytes(UTF_8);
-      keyBuffer = ByteBuffer.allocateDirect(key.length);
-      keyBuffer.put(key, 0, key.length);
-      keyBuffer.flip();
+      final byte[] key1 = "keyBBCF1".getBytes(UTF_8);
+      final ByteBuffer keyBuffer1 = ByteBuffer.allocateDirect(key1.length);
+      keyBuffer1.put(key1, 0, key1.length);
+      keyBuffer1.flip();
 
-      assertThat(db.keyMayExist(readOptions, keyBuffer)).isEqualTo(false);
-      keyBuffer.flip();
-      assertThat(db.keyMayExist(columnFamilyHandleList.get(1), readOptions, keyBuffer))
+      assertThat(db.keyMayExist(readOptions, keyBuffer1)).isEqualTo(false);
+      keyBuffer1.flip();
+      assertThat(db.keyMayExist(columnFamilyHandleList.get(1), readOptions, keyBuffer1))
           .isEqualTo(true);
-      keyBuffer.flip();
-      assertThat(db.keyMayExist(columnFamilyHandleList.get(0), readOptions, keyBuffer))
+      keyBuffer1.flip();
+      assertThat(db.keyMayExist(columnFamilyHandleList.get(0), readOptions, keyBuffer1))
           .isEqualTo(false);
 
-      exceptionRule.expect(AssertionError.class);
-      exceptionRule.expectMessage(
-          "value ByteBuffer parameter cannot be null. If you do not need the value, use a different version of the method");
-      final KeyMayExist keyMayExist =
-          db.keyMayExist(columnFamilyHandleList.get(0), readOptions, keyBuffer, null);
+      assertThrows(AssertionError.class, () -> {
+        db.keyMayExist(columnFamilyHandleList.get(0), readOptions, keyBuffer1, null);
+      });
     }
   }
 
@@ -469,9 +472,10 @@ public class KeyMayExistTest {
     valueBuffer.get(valueGet);
     assertThat(valueGet).isEqualTo(Arrays.copyOfRange(value, 0, value.length - 1));
 
-    exceptionRule.expect(BufferUnderflowException.class);
-    valueGet = new byte[value.length];
-    valueBuffer.get(valueGet);
+    assertThrows(BufferUnderflowException.class, () -> {
+      byte[] valueGet2 = new byte[value.length];
+      valueBuffer.get(valueGet2);
+    });
   }
 
   @Test
@@ -515,9 +519,10 @@ public class KeyMayExistTest {
       valueBuffer.get(valueGet);
       assertThat(valueGet).isEqualTo(Arrays.copyOfRange(value, 0, value.length - 1));
 
-      exceptionRule.expect(BufferUnderflowException.class);
-      valueGet = new byte[value.length];
-      valueBuffer.get(valueGet);
+      assertThrows(BufferUnderflowException.class, () -> {
+        byte[] valueGet2 = new byte[value.length];
+        valueBuffer.get(valueGet2);
+      });
     }
   }
 

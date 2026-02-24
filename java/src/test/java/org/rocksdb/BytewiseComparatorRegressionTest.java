@@ -5,15 +5,17 @@
 
 package org.rocksdb;
 
-import static org.junit.Assert.assertArrayEquals;
+import java.nio.file.Files;
+
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.ArrayList;
-import org.junit.ClassRule;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
+import org.junit.jupiter.api.extension.RegisterExtension;
+import org.junit.jupiter.api.io.TempDir;
+import org.junit.jupiter.api.Test;
 import org.rocksdb.util.BytewiseComparator;
 
 /**
@@ -26,13 +28,13 @@ import org.rocksdb.util.BytewiseComparator;
  * {@link <a href="https://github.com/facebook/rocksdb/issues/2001">...</a>}
  */
 public class BytewiseComparatorRegressionTest {
-  @ClassRule
+  @RegisterExtension
   public static final RocksNativeLibraryResource ROCKS_NATIVE_LIBRARY_RESOURCE =
       new RocksNativeLibraryResource();
 
-  @Rule public TemporaryFolder dbFolder = new TemporaryFolder();
+  @TempDir public File dbFolder;
 
-  @Rule public TemporaryFolder temporarySSTFolder = new TemporaryFolder();
+  @TempDir public File temporarySSTFolder;
 
   private static final byte[][] testData = {{10, -11, 13}, {10, 11, 12}, {10, 11, 14}};
   private static final byte[][] orderedData = {{10, 11, 12}, {10, 11, 14}, {10, -11, 13}};
@@ -67,7 +69,7 @@ public class BytewiseComparatorRegressionTest {
   }
 
   private void performTest(final Options options) throws RocksDBException {
-    try (final RocksDB db = RocksDB.open(options, dbFolder.getRoot().getAbsolutePath())) {
+    try (final RocksDB db = RocksDB.open(options, dbFolder.getAbsolutePath())) {
       for (final byte[] item : testData) {
         db.put(item, item);
       }
@@ -114,13 +116,13 @@ public class BytewiseComparatorRegressionTest {
    */
   @Test
   public void testSST() throws RocksDBException, IOException {
-    final File tempSSTFile = temporarySSTFolder.newFile("test_file_with_weird_keys.sst");
+    final Path tempSSTFile = Files.createTempFile(temporarySSTFolder.toPath(), "test_file_with_weird_keys", ".sst");
 
     final EnvOptions envOpts = new EnvOptions();
     final Options opts = new Options();
     opts.setComparator(new BytewiseComparator(new ComparatorOptions()));
     final SstFileWriter writer = new SstFileWriter(envOpts, opts);
-    writer.open(tempSSTFile.getAbsolutePath());
+    writer.open(tempSSTFile.toAbsolutePath().toString());
     final byte[] gKey =
         hexToByte("000000293030303030303030303030303030303030303032303736343730696E666F33");
     final byte[] wKey =

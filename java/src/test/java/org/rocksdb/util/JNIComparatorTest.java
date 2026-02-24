@@ -6,70 +6,59 @@
 
 package org.rocksdb.util;
 
-import org.junit.ClassRule;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
-import org.junit.runners.Parameterized.Parameter;
-import org.junit.runners.Parameterized.Parameters;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import org.rocksdb.*;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.file.*;
-import java.util.Arrays;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@RunWith(Parameterized.class)
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
+import org.junit.jupiter.params.provider.Arguments;
+import java.util.stream.Stream;
+import org.junit.jupiter.api.io.TempDir;
+import java.io.File;
+
 public class JNIComparatorTest {
 
-  @Parameters(name = "{0}")
-  public static Iterable<Object[]> parameters() {
-    return Arrays.asList(new Object[][] {
-        { "bytewise_non-direct", BuiltinComparator.BYTEWISE_COMPARATOR, false },
-        { "bytewise_direct", BuiltinComparator.BYTEWISE_COMPARATOR, true },
-        { "reverse-bytewise_non-direct", BuiltinComparator.REVERSE_BYTEWISE_COMPARATOR, false },
-        { "reverse-bytewise_direct", BuiltinComparator.REVERSE_BYTEWISE_COMPARATOR, true },
-    });
+  static Stream<Arguments> parameters() {
+    return Stream.of(
+        Arguments.of("bytewise_non-direct", BuiltinComparator.BYTEWISE_COMPARATOR, false),
+        Arguments.of("bytewise_direct", BuiltinComparator.BYTEWISE_COMPARATOR, true),
+        Arguments.of("reverse-bytewise_non-direct", BuiltinComparator.REVERSE_BYTEWISE_COMPARATOR, false),
+        Arguments.of("reverse-bytewise_direct", BuiltinComparator.REVERSE_BYTEWISE_COMPARATOR, true)
+    );
   }
 
-  @Parameter(0)
-  public String name;
-
-  @Parameter(1)
-  public BuiltinComparator builtinComparator;
-
-  @Parameter(2)
-  public boolean useDirectBuffer;
-
-  @ClassRule
+  @RegisterExtension
   public static final RocksNativeLibraryResource ROCKS_NATIVE_LIBRARY_RESOURCE =
       new RocksNativeLibraryResource();
 
-  @Rule
-  public TemporaryFolder dbFolder = new TemporaryFolder();
+  @TempDir
+  File dbFolder;
 
   private static final int MIN = Short.MIN_VALUE - 1;
   private static final int MAX = Short.MAX_VALUE + 1;
 
-  @Test
-  public void java_comparator_equals_cpp_comparator() throws RocksDBException, IOException {
+  @ParameterizedTest
+  @MethodSource("parameters")
+  public void java_comparator_equals_cpp_comparator(final String name, final BuiltinComparator builtinComparator, final boolean useDirectBuffer) throws RocksDBException, IOException {
     final int[] javaKeys;
     try (final ComparatorOptions comparatorOptions = new ComparatorOptions();
          final AbstractComparator comparator = builtinComparator == BuiltinComparator.BYTEWISE_COMPARATOR
              ? new BytewiseComparator(comparatorOptions)
              : new ReverseBytewiseComparator(comparatorOptions)) {
       final Path javaDbDir =
-          FileSystems.getDefault().getPath(dbFolder.newFolder().getAbsolutePath());
+          FileSystems.getDefault().getPath(Files.createTempDirectory(dbFolder.toPath(), "java_comparator_equals_cpp_comparator-java").toAbsolutePath().toString());
       storeWithJavaComparator(javaDbDir, comparator);
       javaKeys = readAllWithJavaComparator(javaDbDir, comparator);
     }
 
     final Path cppDbDir =
-        FileSystems.getDefault().getPath(dbFolder.newFolder().getAbsolutePath());
+        FileSystems.getDefault().getPath(Files.createTempDirectory(dbFolder.toPath(), "java_comparator_equals_cpp_comparator-cpp").toAbsolutePath().toString());
     storeWithCppComparator(cppDbDir, builtinComparator);
     final int[] cppKeys =
         readAllWithCppComparator(cppDbDir, builtinComparator);

@@ -6,23 +6,20 @@
 package org.rocksdb;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.util.Random;
 
-import org.junit.ClassRule;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.ExpectedException;
+import org.junit.jupiter.api.extension.RegisterExtension;
+import org.junit.jupiter.api.io.TempDir;
+import org.junit.jupiter.api.Test;
 
 public class BackupEngineOptionsTest {
   private static final String ARBITRARY_PATH = System.getProperty("java.io.tmpdir");
 
-  @ClassRule
+  @RegisterExtension
   public static final RocksNativeLibraryResource ROCKS_NATIVE_LIBRARY_RESOURCE =
       new RocksNativeLibraryResource();
-
-  @Rule
-  public ExpectedException exception = ExpectedException.none();
 
   public static final Random rand = PlatformRandomHelper.
       getPlatformSpecificRandomFactory();
@@ -176,122 +173,151 @@ public class BackupEngineOptionsTest {
 
   @Test
   public void failBackupDirIsNull() {
-    exception.expect(IllegalArgumentException.class);
-    try (final BackupEngineOptions ignored = new BackupEngineOptions(null)) {
-      //no-op
-    }
+    assertThrows(IllegalArgumentException.class, () -> {
+      try (final BackupEngineOptions ignored = new BackupEngineOptions(null)) {
+        //no-op
+      }
+    });
   }
 
   @Test
   public void failBackupDirIfDisposed() {
-    try (final BackupEngineOptions options = setupUninitializedBackupEngineOptions(exception)) {
-      options.backupDir();
-    }
+    assertThrows(AssertionError.class, () -> {
+      try (final BackupEngineOptions options = setupUninitializedBackupEngineOptions()) {
+        options.backupDir();
+      }
+    });
   }
 
   @Test
   public void failSetShareTableFilesIfDisposed() {
-    try (final BackupEngineOptions options = setupUninitializedBackupEngineOptions(exception)) {
-      options.setShareTableFiles(true);
-    }
+    assertThrows(AssertionError.class, () -> {
+      try (final BackupEngineOptions options = setupUninitializedBackupEngineOptions()) {
+        options.setShareTableFiles(true);
+      }
+    });
   }
 
   @Test
   public void failShareTableFilesIfDisposed() {
-    try (final BackupEngineOptions options = setupUninitializedBackupEngineOptions(exception)) {
-      options.shareTableFiles();
-    }
+    assertThrows(AssertionError.class, () -> {
+      try (final BackupEngineOptions options = setupUninitializedBackupEngineOptions()) {
+        options.shareTableFiles();
+      }
+    });
   }
 
   @Test
   public void failSetSyncIfDisposed() {
-    try (final BackupEngineOptions options = setupUninitializedBackupEngineOptions(exception)) {
-      options.setSync(true);
-    }
+    assertThrows(AssertionError.class, () -> {
+      try (final BackupEngineOptions options = setupUninitializedBackupEngineOptions()) {
+        options.setSync(true);
+      }
+    });
   }
 
   @Test
   public void failSyncIfDisposed() {
-    try (final BackupEngineOptions options = setupUninitializedBackupEngineOptions(exception)) {
-      options.sync();
-    }
+    assertThrows(AssertionError.class, () -> {
+      try (final BackupEngineOptions options = setupUninitializedBackupEngineOptions()) {
+        options.sync();
+      }
+    });
   }
 
   @Test
   public void failSetDestroyOldDataIfDisposed() {
-    try (final BackupEngineOptions options = setupUninitializedBackupEngineOptions(exception)) {
-      options.setDestroyOldData(true);
-    }
+    assertThrows(AssertionError.class, () -> {
+      try (final BackupEngineOptions options = setupUninitializedBackupEngineOptions()) {
+        options.setDestroyOldData(true);
+      }
+    });
   }
 
   @Test
   public void failDestroyOldDataIfDisposed() {
-    try (final BackupEngineOptions options = setupUninitializedBackupEngineOptions(exception)) {
-      options.destroyOldData();
-    }
+    assertThrows(AssertionError.class, () -> {
+      try (final BackupEngineOptions options = setupUninitializedBackupEngineOptions()) {
+        options.destroyOldData();
+      }
+    });
   }
 
   @Test
   public void failSetBackupLogFilesIfDisposed() {
-    try (final BackupEngineOptions options = setupUninitializedBackupEngineOptions(exception)) {
-      options.setBackupLogFiles(true);
-    }
+    assertThrows(AssertionError.class, () -> {
+      try (final BackupEngineOptions options = setupUninitializedBackupEngineOptions()) {
+        options.setBackupLogFiles(true);
+      }
+    });
   }
 
   @Test
   public void failBackupLogFilesIfDisposed() {
-    try (final BackupEngineOptions options = setupUninitializedBackupEngineOptions(exception)) {
-      options.backupLogFiles();
-    }
+    assertThrows(AssertionError.class, () -> {
+      try (final BackupEngineOptions options = setupUninitializedBackupEngineOptions()) {
+        options.backupLogFiles();
+      }
+    });
   }
 
   @Test
   public void failSetBackupRateLimitIfDisposed() {
-    try (final BackupEngineOptions options = setupUninitializedBackupEngineOptions(exception)) {
-      options.setBackupRateLimit(1);
-    }
+    assertThrows(AssertionError.class, () -> {
+      try (final BackupEngineOptions options = setupUninitializedBackupEngineOptions()) {
+        options.setBackupRateLimit(1);
+      }
+    });
   }
 
   @Test
   public void failBackupRateLimitIfDisposed() {
-    try (final BackupEngineOptions options = setupUninitializedBackupEngineOptions(exception)) {
-      options.backupRateLimit();
-    }
+    assertThrows(AssertionError.class, () -> {
+      try (final BackupEngineOptions options = setupUninitializedBackupEngineOptions()) {
+        options.backupRateLimit();
+      }
+    });
   }
 
   @Test
   public void failSetRestoreRateLimitIfDisposed() {
-    try (final BackupEngineOptions options = setupUninitializedBackupEngineOptions(exception)) {
-      options.setRestoreRateLimit(1);
-    }
+    assertThrows(AssertionError.class, () -> {
+      try (final BackupEngineOptions options = setupUninitializedBackupEngineOptions()) {
+        options.setRestoreRateLimit(1);
+      }
+    });
   }
 
   @Test
   public void failRestoreRateLimitIfDisposed() {
-    try (final BackupEngineOptions options = setupUninitializedBackupEngineOptions(exception)) {
-      options.restoreRateLimit();
-    }
+    assertThrows(AssertionError.class, () -> {
+      try (final BackupEngineOptions options = setupUninitializedBackupEngineOptions()) {
+        options.restoreRateLimit();
+      }
+    });
   }
 
   @Test
   public void failSetShareFilesWithChecksumIfDisposed() {
-    try (final BackupEngineOptions options = setupUninitializedBackupEngineOptions(exception)) {
-      options.setShareFilesWithChecksum(true);
-    }
+    assertThrows(AssertionError.class, () -> {
+      try (final BackupEngineOptions options = setupUninitializedBackupEngineOptions()) {
+        options.setShareFilesWithChecksum(true);
+      }
+    });
   }
 
   @Test
   public void failShareFilesWithChecksumIfDisposed() {
-    try (final BackupEngineOptions options = setupUninitializedBackupEngineOptions(exception)) {
-      options.shareFilesWithChecksum();
-    }
+    assertThrows(AssertionError.class, () -> {
+      try (final BackupEngineOptions options = setupUninitializedBackupEngineOptions()) {
+        options.shareFilesWithChecksum();
+      }
+    });
   }
 
-  private BackupEngineOptions setupUninitializedBackupEngineOptions(
-      final ExpectedException exception) {
+  private BackupEngineOptions setupUninitializedBackupEngineOptions() {
     final BackupEngineOptions backupEngineOptions = new BackupEngineOptions(ARBITRARY_PATH);
     backupEngineOptions.close();
-    exception.expect(AssertionError.class);
     return backupEngineOptions;
   }
 }

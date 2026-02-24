@@ -11,18 +11,20 @@ import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import org.junit.ClassRule;
-import org.junit.Ignore;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
+
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.extension.RegisterExtension;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
+import java.io.File;
 
 public class VerifyChecksumsTest {
-  @ClassRule
+  @RegisterExtension
   public static final RocksNativeLibraryResource ROCKS_NATIVE_LIBRARY_RESOURCE =
       new RocksNativeLibraryResource();
 
-  @Rule public TemporaryFolder dbFolder = new TemporaryFolder();
+  @TempDir
+  File dbFolder;
 
   /**
    * Class to factor out the specific DB operations within the test
@@ -138,7 +140,7 @@ public class VerifyChecksumsTest {
    * @throws RocksDBException
    */
   private void verifyChecksums(final Operations operations) throws RocksDBException {
-    final String dbPath = dbFolder.getRoot().getAbsolutePath();
+    final String dbPath = dbFolder.getAbsolutePath();
 
     // noinspection SingleStatementInBlock
     try (final Statistics statistics = new Statistics();
@@ -202,8 +204,7 @@ public class VerifyChecksumsTest {
     });
   }
 
-  @Ignore(
-      "The block checksum count looks as if it is not updated when a more optimized C++ multiGet is used.")
+  @Disabled("The block checksum count looks as if it is not updated when a more optimized C++ multiGet is used.")
   @Test
   public void
   verifyChecksumsMultiGet() throws RocksDBException {

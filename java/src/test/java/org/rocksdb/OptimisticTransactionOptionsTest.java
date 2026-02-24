@@ -8,8 +8,8 @@ package org.rocksdb;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.Random;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 import org.rocksdb.util.BytewiseComparator;
 
 public class OptimisticTransactionOptionsTest {
@@ -17,7 +17,7 @@ public class OptimisticTransactionOptionsTest {
   private static final Random rand = PlatformRandomHelper.
       getPlatformSpecificRandomFactory();
 
-  @BeforeClass
+  @BeforeAll
   public static void beforeAll() {
     RocksDB.loadLibrary();
   }

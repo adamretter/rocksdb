@@ -5,15 +5,9 @@
 
 package org.rocksdb.util;
 
-import org.junit.BeforeClass;
-import org.junit.ClassRule;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
-import org.junit.runners.Parameterized.Parameter;
-import org.junit.runners.Parameterized.Parameters;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.extension.RegisterExtension;
+import org.junit.jupiter.api.Test;
 import org.rocksdb.*;
 
 import java.nio.ByteBuffer;
@@ -26,18 +20,23 @@ import java.util.Random;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
 
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
+import org.junit.jupiter.params.provider.Arguments;
+import java.util.stream.Stream;
+import org.junit.jupiter.api.io.TempDir;
+import java.io.File;
 /**
  * Tests for IntComparator, but more generally
  * also for rocksdb::ComparatorJniCallback implementation.
  */
-@RunWith(Parameterized.class)
 public class IntComparatorTest {
 
   // test with 500 random integer keys
   private static final int TOTAL_KEYS = 500;
   private static final byte[][] keys = new byte[TOTAL_KEYS][4];
 
-  @BeforeClass
+  @BeforeAll
   public static void prepareKeys() {
     final ByteBuffer buf = ByteBuffer.allocate(4);
     final Random random = new Random();
@@ -65,42 +64,30 @@ public class IntComparatorTest {
     return false;
   }
 
-  @Parameters(name = "{0}")
-  public static Iterable<Object[]> parameters() {
-    return Arrays.asList(new Object[][] {
-        { "non-direct_reused64_mutex", false, 64, ReusedSynchronisationType.MUTEX },
-        { "direct_reused64_mutex", true, 64, ReusedSynchronisationType.MUTEX },
-        { "non-direct_reused64_adaptive-mutex", false, 64, ReusedSynchronisationType.ADAPTIVE_MUTEX },
-        { "direct_reused64_adaptive-mutex", true, 64, ReusedSynchronisationType.ADAPTIVE_MUTEX },
-        { "non-direct_reused64_thread-local", false, 64, ReusedSynchronisationType.THREAD_LOCAL },
-        { "direct_reused64_thread-local", true, 64, ReusedSynchronisationType.THREAD_LOCAL },
-        { "non-direct_noreuse", false, -1, null },
-        { "direct_noreuse", true, -1, null }
-    });
+  static Stream<Arguments> parameters() {
+    return Stream.of(
+        Arguments.of("non-direct_reused64_mutex", false, 64, ReusedSynchronisationType.MUTEX ),
+        Arguments.of("direct_reused64_mutex", true, 64, ReusedSynchronisationType.MUTEX ),
+        Arguments.of("non-direct_reused64_adaptive-mutex", false, 64, ReusedSynchronisationType.ADAPTIVE_MUTEX ),
+        Arguments.of("direct_reused64_adaptive-mutex", true, 64, ReusedSynchronisationType.ADAPTIVE_MUTEX ),
+        Arguments.of("non-direct_reused64_thread-local", false, 64, ReusedSynchronisationType.THREAD_LOCAL ),
+        Arguments.of("direct_reused64_thread-local", true, 64, ReusedSynchronisationType.THREAD_LOCAL ),
+        Arguments.of("non-direct_noreuse", false, -1, null ),
+        Arguments.of("direct_noreuse", true, -1, null )
+    );
   }
 
-  @Parameter(0)
-  public String name;
-
-  @Parameter(1)
-  public boolean useDirectBuffer;
-
-  @Parameter(2)
-  public int maxReusedBufferSize;
-
-  @Parameter(3)
-  public ReusedSynchronisationType reusedSynchronisationType;
-
-  @ClassRule
+          @RegisterExtension
   public static final RocksNativeLibraryResource ROCKS_NATIVE_LIBRARY_RESOURCE =
       new RocksNativeLibraryResource();
 
-  @Rule
-  public TemporaryFolder dbFolder = new TemporaryFolder();
+  @TempDir
+  File dbFolder;
 
 
-  @Test
-  public void javaComparatorDefaultCf() throws RocksDBException {
+  @ParameterizedTest
+  @MethodSource("parameters")
+  public void javaComparatorDefaultCf(final String name, final boolean useDirectBuffer, final int maxReusedBufferSize, final ReusedSynchronisationType reusedSynchronisationType) throws RocksDBException {
     try (final ComparatorOptions options = new ComparatorOptions()
         .setUseDirectBuffer(useDirectBuffer)
         .setMaxReusedBufferSize(maxReusedBufferSize)
@@ -110,12 +97,13 @@ public class IntComparatorTest {
 
       // test the round-tripability of keys written and read with the Comparator
       testRoundtrip(FileSystems.getDefault().getPath(
-          dbFolder.getRoot().getAbsolutePath()), comparator);
+          dbFolder.getAbsolutePath()), comparator);
     }
   }
 
-  @Test
-  public void javaComparatorNamedCf() throws RocksDBException {
+  @ParameterizedTest
+  @MethodSource("parameters")
+  public void javaComparatorNamedCf(final String name, final boolean useDirectBuffer, final int maxReusedBufferSize, final ReusedSynchronisationType reusedSynchronisationType) throws RocksDBException {
     try (final ComparatorOptions options = new ComparatorOptions()
         .setUseDirectBuffer(useDirectBuffer)
         .setMaxReusedBufferSize(maxReusedBufferSize)
@@ -125,7 +113,7 @@ public class IntComparatorTest {
 
       // test the round-tripability of keys written and read with the Comparator
       testRoundtripCf(FileSystems.getDefault().getPath(
-          dbFolder.getRoot().getAbsolutePath()), comparator);
+          dbFolder.getAbsolutePath()), comparator);
     }
   }
 

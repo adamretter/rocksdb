@@ -6,14 +6,15 @@
 
 package org.rocksdb;
 
+import java.io.File;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
+import org.junit.jupiter.api.io.TempDir;
+import org.junit.jupiter.api.Test;
 
 public class HyperClockCacheTest {
-  @Rule public TemporaryFolder dbFolder = new TemporaryFolder();
+  @TempDir public File dbFolder;
 
   @Test
   public void newHyperClockCache() throws RocksDBException {
@@ -24,7 +25,7 @@ public class HyperClockCacheTest {
       try (Options options = new Options()) {
         options.setTableFormatConfig(tableConfing);
         options.setCreateIfMissing(true);
-        try (RocksDB db = RocksDB.open(options, dbFolder.getRoot().getAbsolutePath())) {
+        try (RocksDB db = RocksDB.open(options, dbFolder.getAbsolutePath())) {
           db.put("testKey".getBytes(), "testData".getBytes());
           // no op
           assertThat(cache.getUsage()).isGreaterThanOrEqualTo(0);

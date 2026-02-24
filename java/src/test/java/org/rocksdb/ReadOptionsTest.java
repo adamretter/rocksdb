@@ -8,21 +8,19 @@ package org.rocksdb;
 import java.util.Arrays;
 import java.util.Random;
 
-import org.junit.ClassRule;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.ExpectedException;
+import org.junit.jupiter.api.extension.RegisterExtension;
+import org.junit.jupiter.api.io.TempDir;
+import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 public class ReadOptionsTest {
 
-  @ClassRule
+  @RegisterExtension
   public static final RocksNativeLibraryResource ROCKS_NATIVE_LIBRARY_RESOURCE =
       new RocksNativeLibraryResource();
 
-  @Rule
-  public ExpectedException exception = ExpectedException.none();
 
   @Test
   public void altConstructor() {
@@ -256,104 +254,115 @@ public class ReadOptionsTest {
 
   @Test
   public void failSetVerifyChecksumUninitialized() {
-    try (final ReadOptions readOptions =
-             setupUninitializedReadOptions(exception)) {
-      readOptions.setVerifyChecksums(true);
-    }
+    assertThrows(AssertionError.class, () -> {
+      try (final ReadOptions readOptions = setupUninitializedReadOptions()) {
+        readOptions.setVerifyChecksums(true);
+      }
+    });
   }
 
   @Test
   public void failVerifyChecksumUninitialized() {
-    try (final ReadOptions readOptions =
-             setupUninitializedReadOptions(exception)) {
-      readOptions.verifyChecksums();
-    }
+    assertThrows(AssertionError.class, () -> {
+      try (final ReadOptions readOptions = setupUninitializedReadOptions()) {
+        readOptions.verifyChecksums();
+      }
+    });
   }
 
   @Test
   public void failSetFillCacheUninitialized() {
-    try (final ReadOptions readOptions =
-             setupUninitializedReadOptions(exception)) {
-      readOptions.setFillCache(true);
-    }
+    assertThrows(AssertionError.class, () -> {
+      try (final ReadOptions readOptions = setupUninitializedReadOptions()) {
+        readOptions.setFillCache(true);
+      }
+    });
   }
 
   @Test
   public void failFillCacheUninitialized() {
-    try (final ReadOptions readOptions =
-             setupUninitializedReadOptions(exception)) {
-      readOptions.fillCache();
-    }
+    assertThrows(AssertionError.class, () -> {
+      try (final ReadOptions readOptions = setupUninitializedReadOptions()) {
+        readOptions.fillCache();
+      }
+    });
   }
 
   @Test
   public void failSetTailingUninitialized() {
-    try (final ReadOptions readOptions =
-             setupUninitializedReadOptions(exception)) {
-      readOptions.setTailing(true);
-    }
+    assertThrows(AssertionError.class, () -> {
+      try (final ReadOptions readOptions = setupUninitializedReadOptions()) {
+        readOptions.setTailing(true);
+      }
+    });
   }
 
   @Test
   public void failTailingUninitialized() {
-    try (final ReadOptions readOptions =
-             setupUninitializedReadOptions(exception)) {
-      readOptions.tailing();
-    }
+    assertThrows(AssertionError.class, () -> {
+      try (final ReadOptions readOptions = setupUninitializedReadOptions()) {
+        readOptions.tailing();
+      }
+    });
   }
 
   @Test
   public void failSetSnapshotUninitialized() {
-    try (final ReadOptions readOptions =
-             setupUninitializedReadOptions(exception)) {
-      readOptions.setSnapshot(null);
-    }
+    assertThrows(AssertionError.class, () -> {
+      try (final ReadOptions readOptions = setupUninitializedReadOptions()) {
+        readOptions.setSnapshot(null);
+      }
+    });
   }
 
   @Test
   public void failSnapshotUninitialized() {
-    try (final ReadOptions readOptions =
-             setupUninitializedReadOptions(exception)) {
-      readOptions.snapshot();
-    }
+    assertThrows(AssertionError.class, () -> {
+      try (final ReadOptions readOptions = setupUninitializedReadOptions()) {
+        readOptions.snapshot();
+      }
+    });
   }
 
   @Test
   public void failSetIterateUpperBoundUninitialized() {
-    try (final ReadOptions readOptions =
-             setupUninitializedReadOptions(exception)) {
-      readOptions.setIterateUpperBound(null);
-    }
+    assertThrows(AssertionError.class, () -> {
+      try (final ReadOptions readOptions = setupUninitializedReadOptions()) {
+        readOptions.setIterateUpperBound(null);
+      }
+    });
   }
 
   @Test
   public void failIterateUpperBoundUninitialized() {
-    try (final ReadOptions readOptions =
-             setupUninitializedReadOptions(exception)) {
-      readOptions.iterateUpperBound();
-    }
+    assertThrows(AssertionError.class, () -> {
+      try (final ReadOptions readOptions = setupUninitializedReadOptions()) {
+        readOptions.iterateUpperBound();
+      }
+    });
   }
 
   @Test
   public void failSetIterateLowerBoundUninitialized() {
-    try (final ReadOptions readOptions =
-             setupUninitializedReadOptions(exception)) {
-      readOptions.setIterateLowerBound(null);
-    }
+    assertThrows(AssertionError.class, () -> {
+      try (final ReadOptions readOptions = setupUninitializedReadOptions()) {
+        readOptions.setIterateLowerBound(null);
+      }
+    });
   }
 
   @Test
   public void failIterateLowerBoundUninitialized() {
-    try (final ReadOptions readOptions =
-             setupUninitializedReadOptions(exception)) {
-      readOptions.iterateLowerBound();
-    }
+    assertThrows(AssertionError.class, () -> {
+      try (final ReadOptions readOptions = setupUninitializedReadOptions()) {
+        readOptions.iterateLowerBound();
+      }
+    });
   }
 
-  private ReadOptions setupUninitializedReadOptions(final ExpectedException exception) {
+  private ReadOptions setupUninitializedReadOptions() {
     final ReadOptions readOptions = new ReadOptions();
     readOptions.close();
-    exception.expect(AssertionError.class);
     return readOptions;
   }
 

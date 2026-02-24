@@ -5,7 +5,10 @@
 
 package org.rocksdb;
 
+import java.io.File;
+
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assumptions.assumeFalse;
 
 import java.beans.BeanInfo;
 import java.beans.IntrospectionException;
@@ -15,22 +18,27 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import org.junit.*;
-import org.junit.rules.TemporaryFolder;
+
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
+import org.junit.jupiter.api.io.TempDir;
+
 import org.rocksdb.util.Environment;
 
 public class PerfContextTest {
-  @ClassRule
+  @RegisterExtension
   public static final RocksNativeLibraryResource ROCKS_NATIVE_LIBRARY_RESOURCE =
       new RocksNativeLibraryResource();
 
-  @Rule public TemporaryFolder dbFolder = new TemporaryFolder();
+  @TempDir public File dbFolder;
 
   List<ColumnFamilyDescriptor> cfDescriptors;
   List<ColumnFamilyHandle> columnFamilyHandleList = new ArrayList<>();
   RocksDB db;
 
-  @Before
+  @BeforeEach
   public void before() throws RocksDBException {
     cfDescriptors = Arrays.asList(new ColumnFamilyDescriptor(RocksDB.DEFAULT_COLUMN_FAMILY),
         new ColumnFamilyDescriptor("new_cf".getBytes()));
@@ -38,10 +46,10 @@ public class PerfContextTest {
         new DBOptions().setCreateIfMissing(true).setCreateMissingColumnFamilies(true);
 
     db = RocksDB.open(
-        options, dbFolder.getRoot().getAbsolutePath(), cfDescriptors, columnFamilyHandleList);
+        options, dbFolder.getAbsolutePath(), cfDescriptors, columnFamilyHandleList);
   }
 
-  @After
+  @AfterEach
   public void after() {
     for (final ColumnFamilyHandle columnFamilyHandle : columnFamilyHandleList) {
       columnFamilyHandle.close();
@@ -81,8 +89,7 @@ public class PerfContextTest {
 
   @Test
   public void testGetBlockReadCpuTime() throws RocksDBException {
-    Assume.assumeFalse("We are not running this test on OpenBSD or Windows",
-        Environment.isOpenBSD() || Environment.isWindows());
+    assumeFalse(Environment.isOpenBSD() || Environment.isWindows(), "We are not running this test on OpenBSD or Windows");
     db.setPerfLevel(PerfLevel.ENABLE_TIME_AND_CPU_TIME_EXCEPT_FOR_MUTEX);
     db.put("key".getBytes(), "value".getBytes());
     db.compactRange();

@@ -4,24 +4,25 @@
 //  (found in the LICENSE.Apache file in the root directory).
 package org.rocksdb;
 
+import java.io.File;
+
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
-import org.junit.ClassRule;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
+import org.junit.jupiter.api.extension.RegisterExtension;
+import org.junit.jupiter.api.io.TempDir;
+import org.junit.jupiter.api.Test;
 
 public class RocksIteratorTest {
 
-  @ClassRule
+  @RegisterExtension
   public static final RocksNativeLibraryResource ROCKS_NATIVE_LIBRARY_RESOURCE =
       new RocksNativeLibraryResource();
 
-  @Rule
-  public TemporaryFolder dbFolder = new TemporaryFolder();
+  @TempDir
+  public File dbFolder;
 
   private void validateByteBufferResult(
       final int fetched, final ByteBuffer byteBuffer, final String expected) {
@@ -49,7 +50,7 @@ public class RocksIteratorTest {
   public void rocksIteratorByteBuffers() throws RocksDBException {
     try (final Options options =
              new Options().setCreateIfMissing(true).setCreateMissingColumnFamilies(true);
-         final RocksDB db = RocksDB.open(options, dbFolder.getRoot().getAbsolutePath())) {
+         final RocksDB db = RocksDB.open(options, dbFolder.getAbsolutePath())) {
       db.put("key1".getBytes(), "value1".getBytes());
       db.put("key2".getBytes(), "value2".getBytes());
 
@@ -81,7 +82,7 @@ public class RocksIteratorTest {
   public void rocksIteratorByteArrayValues() throws RocksDBException {
     try (final Options options =
              new Options().setCreateIfMissing(true).setCreateMissingColumnFamilies(true);
-         final RocksDB db = RocksDB.open(options, dbFolder.getRoot().getAbsolutePath())) {
+         final RocksDB db = RocksDB.open(options, dbFolder.getAbsolutePath())) {
       db.put("key1".getBytes(), "value1".getBytes());
       db.put("key2".getBytes(), "value2".getBytes());
 
@@ -121,7 +122,7 @@ public class RocksIteratorTest {
   public void rocksIteratorByteArrayKeys() throws RocksDBException {
     try (final Options options =
              new Options().setCreateIfMissing(true).setCreateMissingColumnFamilies(true);
-         final RocksDB db = RocksDB.open(options, dbFolder.getRoot().getAbsolutePath())) {
+         final RocksDB db = RocksDB.open(options, dbFolder.getAbsolutePath())) {
       db.put("key1".getBytes(), "value1".getBytes());
       db.put("key2".getBytes(), "value2".getBytes());
 
@@ -161,7 +162,7 @@ public class RocksIteratorTest {
   public void rocksIteratorSimple() throws RocksDBException {
     try (final Options options =
              new Options().setCreateIfMissing(true).setCreateMissingColumnFamilies(true);
-         final RocksDB db = RocksDB.open(options, dbFolder.getRoot().getAbsolutePath())) {
+         final RocksDB db = RocksDB.open(options, dbFolder.getAbsolutePath())) {
       db.put("key1".getBytes(), "value1".getBytes());
       db.put("key2".getBytes(), "value2".getBytes());
 
@@ -196,7 +197,7 @@ public class RocksIteratorTest {
   public void rocksIterator() throws RocksDBException {
     try (final Options options =
              new Options().setCreateIfMissing(true).setCreateMissingColumnFamilies(true);
-         final RocksDB db = RocksDB.open(options, dbFolder.getRoot().getAbsolutePath())) {
+         final RocksDB db = RocksDB.open(options, dbFolder.getAbsolutePath())) {
       db.put("key1".getBytes(), "value1".getBytes());
       db.put("key2".getBytes(), "value2".getBytes());
 
@@ -282,7 +283,7 @@ public class RocksIteratorTest {
   public void rocksIteratorSeekAndInsert() throws RocksDBException {
     try (final Options options =
              new Options().setCreateIfMissing(true).setCreateMissingColumnFamilies(true);
-         final RocksDB db = RocksDB.open(options, dbFolder.getRoot().getAbsolutePath())) {
+         final RocksDB db = RocksDB.open(options, dbFolder.getAbsolutePath())) {
       db.put("key1".getBytes(), "value1".getBytes());
       db.put("key2".getBytes(), "value2".getBytes());
 
@@ -355,7 +356,7 @@ public class RocksIteratorTest {
   public void rocksIteratorSeekAndInsertOnSnapshot() throws RocksDBException {
     try (final Options options =
              new Options().setCreateIfMissing(true).setCreateMissingColumnFamilies(true);
-         final RocksDB db = RocksDB.open(options, dbFolder.getRoot().getAbsolutePath())) {
+         final RocksDB db = RocksDB.open(options, dbFolder.getAbsolutePath())) {
       db.put("key1".getBytes(), "value1".getBytes());
       db.put("key2".getBytes(), "value2".getBytes());
 
@@ -420,7 +421,7 @@ public class RocksIteratorTest {
         .setCreateIfMissing(true)
         .setCreateMissingColumnFamilies(true);
          final RocksDB db = RocksDB.open(options,
-             this.dbFolder.getRoot().getAbsolutePath())) {
+             this.dbFolder.getAbsolutePath())) {
       db.put("key".getBytes(), "value".getBytes());
 
       // Test case: release iterator after default CF close

@@ -4,55 +4,49 @@
 //  (found in the LICENSE.Apache file in the root directory).
 package org.rocksdb;
 
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
-import org.junit.runners.Parameterized.Parameter;
-import org.junit.runners.Parameterized.Parameters;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.io.TempDir;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 
+import java.io.File;
 import java.nio.ByteBuffer;
 import java.util.*;
 import java.util.concurrent.*;
+import java.util.stream.Stream;
 
-@RunWith(Parameterized.class)
 public class WriteBatchThreadedTest {
 
-  @Parameters(name = "WriteBatchThreadedTest(threadCount={0})")
-  public static Iterable<Integer> data() {
-    return Arrays.asList(1, 10, 50, 100);
+  static Stream<Integer> threadCounts() {
+    return Stream.of(1, 10, 50, 100);
   }
 
-  @Parameter
-  public int threadCount;
-
-  @Rule
-  public TemporaryFolder dbFolder = new TemporaryFolder();
+  @TempDir
+  public File dbFolder;
 
   RocksDB db;
 
-  @Before
+  @BeforeEach
   public void setUp() throws Exception {
     RocksDB.loadLibrary();
     final Options options = new Options()
         .setCreateIfMissing(true)
         .setIncreaseParallelism(32);
-    db = RocksDB.open(options, dbFolder.getRoot().getAbsolutePath());
+    db = RocksDB.open(options, dbFolder.getAbsolutePath());
     assert (db != null);
   }
 
-  @After
+  @AfterEach
   public void tearDown() throws Exception {
     if (db != null) {
       db.close();
     }
   }
 
-  @Test
-  public void threadedWrites() throws InterruptedException, ExecutionException {
+  @ParameterizedTest(name = "threadedWrites(threadCount={0})")
+  @MethodSource("threadCounts")
+  public void threadedWrites(int threadCount) throws InterruptedException, ExecutionException {
     final List<Callable<Void>> callables = new ArrayList<>();
     for (int i = 0; i < 100; i++) {
       final int offset = i * 100;

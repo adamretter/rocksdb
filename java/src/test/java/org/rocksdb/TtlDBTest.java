@@ -5,6 +5,8 @@
 
 package org.rocksdb;
 
+import java.io.File;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.nio.charset.StandardCharsets;
@@ -12,25 +14,24 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
-import org.junit.ClassRule;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
+import org.junit.jupiter.api.extension.RegisterExtension;
+import org.junit.jupiter.api.io.TempDir;
+import org.junit.jupiter.api.Test;
 
 public class TtlDBTest {
   private static final int BATCH_ITERATION = 16;
 
-  @ClassRule
+  @RegisterExtension
   public static final RocksNativeLibraryResource ROCKS_NATIVE_LIBRARY_RESOURCE =
       new RocksNativeLibraryResource();
 
-  @Rule
-  public TemporaryFolder dbFolder = new TemporaryFolder();
+  @TempDir
+  public File dbFolder;
 
   @Test
   public void ttlDBOpen() throws RocksDBException, InterruptedException {
     try (final Options options = new Options().setCreateIfMissing(true).setMaxCompactionBytes(0);
-         final TtlDB ttlDB = TtlDB.open(options, dbFolder.getRoot().getAbsolutePath())) {
+         final TtlDB ttlDB = TtlDB.open(options, dbFolder.getAbsolutePath())) {
       ttlDB.put("key".getBytes(), "value".getBytes());
       assertThat(ttlDB.get("key".getBytes())).
           isEqualTo("value".getBytes());
@@ -41,7 +42,7 @@ public class TtlDBTest {
   @Test
   public void ttlDBOpenWithTtl() throws RocksDBException, InterruptedException {
     try (final Options options = new Options().setCreateIfMissing(true).setMaxCompactionBytes(0);
-         final TtlDB ttlDB = TtlDB.open(options, dbFolder.getRoot().getAbsolutePath(), 1, false)) {
+         final TtlDB ttlDB = TtlDB.open(options, dbFolder.getAbsolutePath(), 1, false)) {
       ttlDB.put("key".getBytes(), "value".getBytes());
       assertThat(ttlDB.get("key".getBytes())).
           isEqualTo("value".getBytes());
@@ -81,7 +82,7 @@ public class TtlDBTest {
   @Test
   public void ttlDBSimpleIterator() throws RocksDBException {
     try (final Options options = new Options().setCreateIfMissing(true).setMaxCompactionBytes(0);
-         final TtlDB ttlDB = TtlDB.open(options, dbFolder.getRoot().getAbsolutePath())) {
+         final TtlDB ttlDB = TtlDB.open(options, dbFolder.getAbsolutePath())) {
       ttlDB.put("keyI".getBytes(), "valueI".getBytes());
       try (final RocksIterator iterator = ttlDB.newIterator()) {
         iterator.seekToFirst();
@@ -108,7 +109,7 @@ public class TtlDBTest {
         .setCreateMissingColumnFamilies(true)
         .setCreateIfMissing(true);
          final TtlDB ttlDB = TtlDB.open(dbOptions,
-             dbFolder.getRoot().getAbsolutePath(), cfNames,
+             dbFolder.getAbsolutePath(), cfNames,
              columnFamilyHandleList, ttlValues, false)) {
       try {
         ttlDB.put("key".getBytes(), "value".getBytes());
@@ -140,7 +141,7 @@ public class TtlDBTest {
       InterruptedException {
     try (final Options options = new Options().setCreateIfMissing(true);
          final TtlDB ttlDB = TtlDB.open(options,
-             dbFolder.getRoot().getAbsolutePath());
+             dbFolder.getAbsolutePath());
          final ColumnFamilyHandle columnFamilyHandle =
              ttlDB.createColumnFamilyWithTtl(
                  new ColumnFamilyDescriptor("new_cf".getBytes()), 1)) {
@@ -161,7 +162,7 @@ public class TtlDBTest {
       dbOptions.setCreateMissingColumnFamilies(true);
 
       try (final RocksDB db =
-               TtlDB.open(dbOptions, dbFolder.getRoot().getAbsolutePath(), 100, false)) {
+               TtlDB.open(dbOptions, dbFolder.getAbsolutePath(), 100, false)) {
         try (WriteBatch wb = new WriteBatch()) {
           for (int i = 0; i < BATCH_ITERATION; i++) {
             wb.put(("key" + i).getBytes(StandardCharsets.UTF_8),
@@ -196,7 +197,7 @@ public class TtlDBTest {
 
       final List<Integer> ttlValues = Arrays.asList(0, 1);
 
-      try (final RocksDB db = TtlDB.open(dbOptions, dbFolder.getRoot().getAbsolutePath(), cfNames,
+      try (final RocksDB db = TtlDB.open(dbOptions, dbFolder.getAbsolutePath(), cfNames,
                columnFamilyHandleList, ttlValues, false)) {
         try {
           assertThat(columnFamilyHandleList.get(1).isDefaultColumnFamily()).isTrue();

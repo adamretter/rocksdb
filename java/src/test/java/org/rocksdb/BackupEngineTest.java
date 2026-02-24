@@ -5,10 +5,11 @@
 
 package org.rocksdb;
 
-import org.junit.ClassRule;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
+import java.io.File;
+
+import org.junit.jupiter.api.extension.RegisterExtension;
+import org.junit.jupiter.api.io.TempDir;
+import org.junit.jupiter.api.Test;
 
 import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
@@ -17,29 +18,29 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 public class BackupEngineTest {
 
-  @ClassRule
+  @RegisterExtension
   public static final RocksNativeLibraryResource ROCKS_NATIVE_LIBRARY_RESOURCE =
       new RocksNativeLibraryResource();
 
-  @Rule
-  public TemporaryFolder dbFolder = new TemporaryFolder();
+  @TempDir
+  public File dbFolder;
 
-  @Rule
-  public TemporaryFolder backupFolder = new TemporaryFolder();
+  @TempDir
+  public File backupFolder;
 
   @Test
   public void backupDb() throws RocksDBException {
     // Open empty database.
     try(final Options opt = new Options().setCreateIfMissing(true);
         final RocksDB db = RocksDB.open(opt,
-            dbFolder.getRoot().getAbsolutePath())) {
+            dbFolder.getAbsolutePath())) {
 
       // Fill database with some test values
       prepareDatabase(db);
 
       // Create two backups
       try (final BackupEngineOptions bopt =
-               new BackupEngineOptions(backupFolder.getRoot().getAbsolutePath());
+               new BackupEngineOptions(backupFolder.getAbsolutePath());
            final BackupEngine be = BackupEngine.open(opt.getEnv(), bopt)) {
         be.createNewBackup(db, false);
         be.createNewBackup(db, true);
@@ -53,12 +54,12 @@ public class BackupEngineTest {
     // Open empty database.
     try(final Options opt = new Options().setCreateIfMissing(true);
         final RocksDB db = RocksDB.open(opt,
-            dbFolder.getRoot().getAbsolutePath())) {
+            dbFolder.getAbsolutePath())) {
       // Fill database with some test values
       prepareDatabase(db);
       // Create two backups
       try (final BackupEngineOptions bopt =
-               new BackupEngineOptions(backupFolder.getRoot().getAbsolutePath());
+               new BackupEngineOptions(backupFolder.getAbsolutePath());
            final BackupEngine be = BackupEngine.open(opt.getEnv(), bopt)) {
         be.createNewBackup(db, false);
         be.createNewBackup(db, true);
@@ -81,12 +82,12 @@ public class BackupEngineTest {
     // Open empty database.
     try(final Options opt = new Options().setCreateIfMissing(true);
         final RocksDB db = RocksDB.open(opt,
-            dbFolder.getRoot().getAbsolutePath())) {
+            dbFolder.getAbsolutePath())) {
       // Fill database with some test values
       prepareDatabase(db);
       // Create four backups
       try (final BackupEngineOptions bopt =
-               new BackupEngineOptions(backupFolder.getRoot().getAbsolutePath());
+               new BackupEngineOptions(backupFolder.getAbsolutePath());
            final BackupEngine be = BackupEngine.open(opt.getEnv(), bopt)) {
         be.createNewBackup(db, false);
         be.createNewBackup(db, true);
@@ -112,12 +113,12 @@ public class BackupEngineTest {
       RocksDB db = null;
       try {
         db = RocksDB.open(opt,
-            dbFolder.getRoot().getAbsolutePath());
+            dbFolder.getAbsolutePath());
         // Fill database with some test values
         prepareDatabase(db);
 
         try (final BackupEngineOptions bopt =
-                 new BackupEngineOptions(backupFolder.getRoot().getAbsolutePath());
+                 new BackupEngineOptions(backupFolder.getAbsolutePath());
              final BackupEngine be = BackupEngine.open(opt.getEnv(), bopt)) {
           be.createNewBackup(db, true);
           verifyNumberOfValidBackups(be, 1);
@@ -136,12 +137,12 @@ public class BackupEngineTest {
           verifyNumberOfValidBackups(be, 2);
           // restore db from latest backup
           try(final RestoreOptions ropts = new RestoreOptions(false)) {
-            be.restoreDbFromLatestBackup(dbFolder.getRoot().getAbsolutePath(),
-                dbFolder.getRoot().getAbsolutePath(), ropts);
+            be.restoreDbFromLatestBackup(dbFolder.getAbsolutePath(),
+                dbFolder.getAbsolutePath(), ropts);
           }
 
           // Open database again.
-          db = RocksDB.open(opt, dbFolder.getRoot().getAbsolutePath());
+          db = RocksDB.open(opt, dbFolder.getAbsolutePath());
 
           // Values must have suffix V2 because of restoring latest backup.
           assertThat(new String(db.get("key1".getBytes()))).endsWith("V2");
@@ -163,11 +164,11 @@ public class BackupEngineTest {
       try {
         // Open empty database.
         db = RocksDB.open(opt,
-            dbFolder.getRoot().getAbsolutePath());
+            dbFolder.getAbsolutePath());
         // Fill database with some test values
         prepareDatabase(db);
         try (final BackupEngineOptions bopt =
-                 new BackupEngineOptions(backupFolder.getRoot().getAbsolutePath());
+                 new BackupEngineOptions(backupFolder.getAbsolutePath());
              final BackupEngine be = BackupEngine.open(opt.getEnv(), bopt)) {
           be.createNewBackup(db, true);
           verifyNumberOfValidBackups(be, 1);
@@ -188,12 +189,12 @@ public class BackupEngineTest {
           final List<BackupInfo> backupInfo = verifyNumberOfValidBackups(be, 2);
           // restore db from first backup
           be.restoreDbFromBackup(backupInfo.get(0).backupId(),
-              dbFolder.getRoot().getAbsolutePath(),
-              dbFolder.getRoot().getAbsolutePath(),
+              dbFolder.getAbsolutePath(),
+              dbFolder.getAbsolutePath(),
               new RestoreOptions(false));
           // Open database again.
           db = RocksDB.open(opt,
-              dbFolder.getRoot().getAbsolutePath());
+              dbFolder.getAbsolutePath());
           // Values must have suffix V2 because of restoring latest backup.
           assertThat(new String(db.get("key1".getBytes()))).endsWith("V1");
           assertThat(new String(db.get("key2".getBytes()))).endsWith("V1");
@@ -210,13 +211,13 @@ public class BackupEngineTest {
   public void backupDbWithMetadata() throws RocksDBException {
     // Open empty database.
     try (final Options opt = new Options().setCreateIfMissing(true);
-         final RocksDB db = RocksDB.open(opt, dbFolder.getRoot().getAbsolutePath())) {
+         final RocksDB db = RocksDB.open(opt, dbFolder.getAbsolutePath())) {
       // Fill database with some test values
       prepareDatabase(db);
 
       // Create two backups
       try (final BackupEngineOptions bopt =
-               new BackupEngineOptions(backupFolder.getRoot().getAbsolutePath());
+               new BackupEngineOptions(backupFolder.getAbsolutePath());
            final BackupEngine be = BackupEngine.open(opt.getEnv(), bopt)) {
         final String metadata = String.valueOf(ThreadLocalRandom.current().nextInt());
         be.createNewBackupWithMetadata(db, metadata, true);

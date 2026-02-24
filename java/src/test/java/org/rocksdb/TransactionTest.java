@@ -5,7 +5,7 @@
 
 package org.rocksdb;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -454,7 +454,7 @@ public class TransactionTest extends AbstractTransactionTest {
     final TransactionDB txnDb;
     try {
       txnDb = TransactionDB.open(options, txnDbOptions,
-          dbFolder.getRoot().getAbsolutePath(), columnFamilyDescriptors,
+          dbFolder.getAbsolutePath(), columnFamilyDescriptors,
               columnFamilyHandles);
     } catch(final RocksDBException e) {
       columnFamilyOptions.close();

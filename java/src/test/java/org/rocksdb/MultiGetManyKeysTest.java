@@ -5,51 +5,46 @@
 package org.rocksdb;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assumptions.assumeFalse;
 
 import java.util.*;
-import org.junit.Assume;
-import org.junit.BeforeClass;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
+import org.junit.jupiter.api.BeforeAll;
 import org.rocksdb.util.Environment;
 
-@RunWith(Parameterized.class)
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
+import java.util.stream.Stream;
+import org.junit.jupiter.api.io.TempDir;
+import java.io.File;
+
 public class MultiGetManyKeysTest {
-  @Parameterized.Parameters
-  public static List<Integer> data() {
-    return Arrays.asList(2, 3, 250, 60000, 70000, 150000, 750000);
+
+  static Stream<Integer> parameters() {
+    return Stream.of(2, 3, 250, 60000, 70000, 150000, 750000);
   }
 
-  @Rule public TemporaryFolder dbFolder = new TemporaryFolder();
+  @TempDir
+  File dbFolder;
 
-  private final int numKeys;
-
-  public MultiGetManyKeysTest(final Integer numKeys) {
-    this.numKeys = numKeys;
-  }
-
-  @BeforeClass
+  @BeforeAll
   public static void beforeAllTest() {
-    Assume.assumeFalse("We are not running this test on 32bit systems dues to memory constraints",
-        !Environment.is64Bit());
+    assumeFalse(!Environment.is64Bit(), "We are not running this test on 32bit systems dues to memory constraints");
   }
 
   /**
    * Test for <a link="https://github.com/facebook/rocksdb/issues/8039">multiGet problem</a>
    */
-  @Test
-  public void multiGetAsListLarge() throws RocksDBException {
+  @ParameterizedTest
+  @MethodSource("parameters")
+  public void multiGetAsListLarge(final Integer numKeys) throws RocksDBException {
     final List<byte[]> keys = generateRandomKeys(numKeys);
-    final Map<Key, byte[]> keyValues = generateRandomKeyValues(keys, 10);
+    final Map<Key, byte[]> keyValues = generateRandomKeyValues(keys, 10, numKeys);
     putKeysAndValues(keyValues);
 
     try (final Options opt = new Options().setCreateIfMissing(true);
-         final RocksDB db = RocksDB.open(opt, dbFolder.getRoot().getAbsolutePath())) {
+         final RocksDB db = RocksDB.open(opt, dbFolder.getAbsolutePath())) {
       final List<byte[]> values = db.multiGetAsList(keys);
-      assertKeysAndValues(keys, keyValues, values);
+      assertKeysAndValues(keys, keyValues, values, numKeys);
     }
   }
 
@@ -57,19 +52,20 @@ public class MultiGetManyKeysTest {
    * Test for <a link="https://github.com/facebook/rocksdb/issues/9006">transactional multiGet
    * problem</a>
    */
-  @Test
-  public void multiGetAsListLargeTransactional() throws RocksDBException {
+  @ParameterizedTest
+  @MethodSource("parameters")
+  public void multiGetAsListLargeTransactional(final Integer numKeys) throws RocksDBException {
     final List<byte[]> keys = generateRandomKeys(numKeys);
-    final Map<Key, byte[]> keyValues = generateRandomKeyValues(keys, 10);
+    final Map<Key, byte[]> keyValues = generateRandomKeyValues(keys, 10, numKeys);
     putKeysAndValues(keyValues);
 
     try (final Options options = new Options().setCreateIfMissing(true);
          final TransactionDBOptions txnDbOptions = new TransactionDBOptions();
          final TransactionDB txnDB =
-             TransactionDB.open(options, txnDbOptions, dbFolder.getRoot().getAbsolutePath())) {
+             TransactionDB.open(options, txnDbOptions, dbFolder.getAbsolutePath())) {
       try (final Transaction transaction = txnDB.beginTransaction(new WriteOptions())) {
         final List<byte[]> values = transaction.multiGetAsList(new ReadOptions(), keys);
-        assertKeysAndValues(keys, keyValues, values);
+        assertKeysAndValues(keys, keyValues, values, numKeys);
       }
     }
   }
@@ -78,19 +74,20 @@ public class MultiGetManyKeysTest {
    * Test for <a link="https://github.com/facebook/rocksdb/issues/9006">transactional multiGet
    * problem</a>
    */
-  @Test
-  public void multiGetForUpdateAsListLargeTransactional() throws RocksDBException {
+  @ParameterizedTest
+  @MethodSource("parameters")
+  public void multiGetForUpdateAsListLargeTransactional(final int numKeys) throws RocksDBException {
     final List<byte[]> keys = generateRandomKeys(numKeys);
-    final Map<Key, byte[]> keyValues = generateRandomKeyValues(keys, 10);
+    final Map<Key, byte[]> keyValues = generateRandomKeyValues(keys, 10, numKeys);
     putKeysAndValues(keyValues);
 
     try (final Options options = new Options().setCreateIfMissing(true);
          final TransactionDBOptions txnDbOptions = new TransactionDBOptions();
          final TransactionDB txnDB =
-             TransactionDB.open(options, txnDbOptions, dbFolder.getRoot().getAbsolutePath())) {
+             TransactionDB.open(options, txnDbOptions, dbFolder.getAbsolutePath())) {
       try (final Transaction transaction = txnDB.beginTransaction(new WriteOptions())) {
         final List<byte[]> values = transaction.multiGetForUpdateAsList(new ReadOptions(), keys);
-        assertKeysAndValues(keys, keyValues, values);
+        assertKeysAndValues(keys, keyValues, values, numKeys);
       }
     }
   }
@@ -99,10 +96,11 @@ public class MultiGetManyKeysTest {
    * Test for <a link="https://github.com/facebook/rocksdb/issues/9006">transactional multiGet
    * problem</a>
    */
-  @Test
-  public void multiGetAsListLargeTransactionalCF() throws RocksDBException {
+  @ParameterizedTest
+  @MethodSource("parameters")
+  public void multiGetAsListLargeTransactionalCF(final int numKeys) throws RocksDBException {
     final List<byte[]> keys = generateRandomKeys(numKeys);
-    final Map<Key, byte[]> keyValues = generateRandomKeyValues(keys, 10);
+    final Map<Key, byte[]> keyValues = generateRandomKeyValues(keys, 10, numKeys);
     final ColumnFamilyDescriptor columnFamilyDescriptor =
         new ColumnFamilyDescriptor("cfTest".getBytes());
     putKeysAndValues(columnFamilyDescriptor, keyValues);
@@ -114,14 +112,14 @@ public class MultiGetManyKeysTest {
     try (final Options options = new Options().setCreateIfMissing(true);
          final TransactionDBOptions txnDbOptions = new TransactionDBOptions();
          final TransactionDB txnDB = TransactionDB.open(new DBOptions(options), txnDbOptions,
-             dbFolder.getRoot().getAbsolutePath(), columnFamilyDescriptors, columnFamilyHandles)) {
+             dbFolder.getAbsolutePath(), columnFamilyDescriptors, columnFamilyHandles)) {
       final List<ColumnFamilyHandle> columnFamilyHandlesForMultiGet = new ArrayList<>(numKeys);
       for (int i = 0; i < numKeys; i++)
         columnFamilyHandlesForMultiGet.add(columnFamilyHandles.get(0));
       try (final Transaction transaction = txnDB.beginTransaction(new WriteOptions())) {
         final List<byte[]> values =
             transaction.multiGetAsList(new ReadOptions(), columnFamilyHandlesForMultiGet, keys);
-        assertKeysAndValues(keys, keyValues, values);
+        assertKeysAndValues(keys, keyValues, values, numKeys);
       }
       for (final ColumnFamilyHandle columnFamilyHandle : columnFamilyHandles) {
         columnFamilyHandle.close();
@@ -133,10 +131,11 @@ public class MultiGetManyKeysTest {
    * Test for <a link="https://github.com/facebook/rocksdb/issues/9006">transactional multiGet
    * problem</a>
    */
-  @Test
-  public void multiGetForUpdateAsListLargeTransactionalCF() throws RocksDBException {
+  @ParameterizedTest
+  @MethodSource("parameters")
+  public void multiGetForUpdateAsListLargeTransactionalCF(final int numKeys) throws RocksDBException {
     final List<byte[]> keys = generateRandomKeys(numKeys);
-    final Map<Key, byte[]> keyValues = generateRandomKeyValues(keys, 10);
+    final Map<Key, byte[]> keyValues = generateRandomKeyValues(keys, 10, numKeys);
     final ColumnFamilyDescriptor columnFamilyDescriptor =
         new ColumnFamilyDescriptor("cfTest".getBytes());
     putKeysAndValues(columnFamilyDescriptor, keyValues);
@@ -148,14 +147,14 @@ public class MultiGetManyKeysTest {
     try (final Options options = new Options().setCreateIfMissing(true);
          final TransactionDBOptions txnDbOptions = new TransactionDBOptions();
          final TransactionDB txnDB = TransactionDB.open(new DBOptions(options), txnDbOptions,
-             dbFolder.getRoot().getAbsolutePath(), columnFamilyDescriptors, columnFamilyHandles)) {
+             dbFolder.getAbsolutePath(), columnFamilyDescriptors, columnFamilyHandles)) {
       final List<ColumnFamilyHandle> columnFamilyHandlesForMultiGet = new ArrayList<>(numKeys);
       for (int i = 0; i < numKeys; i++)
         columnFamilyHandlesForMultiGet.add(columnFamilyHandles.get(0));
       try (final Transaction transaction = txnDB.beginTransaction(new WriteOptions())) {
         final List<byte[]> values = transaction.multiGetForUpdateAsList(
             new ReadOptions(), columnFamilyHandlesForMultiGet, keys);
-        assertKeysAndValues(keys, keyValues, values);
+        assertKeysAndValues(keys, keyValues, values, numKeys);
       }
       for (final ColumnFamilyHandle columnFamilyHandle : columnFamilyHandles) {
         columnFamilyHandle.close();
@@ -174,7 +173,7 @@ public class MultiGetManyKeysTest {
     return keys;
   }
 
-  private Map<Key, byte[]> generateRandomKeyValues(final List<byte[]> keys, final int percent) {
+  private Map<Key, byte[]> generateRandomKeyValues(final List<byte[]> keys, final int percent, final int numKeys) {
     final Random rand = new Random();
     final Map<Key, byte[]> keyValues = new HashMap<>();
     for (int i = 0; i < numKeys; i++) {
@@ -189,7 +188,7 @@ public class MultiGetManyKeysTest {
 
   private void putKeysAndValues(final Map<Key, byte[]> keyValues) throws RocksDBException {
     try (final Options options = new Options().setCreateIfMissing(true);
-         final RocksDB db = RocksDB.open(options, dbFolder.getRoot().getAbsolutePath())) {
+         final RocksDB db = RocksDB.open(options, dbFolder.getAbsolutePath())) {
       for (final Map.Entry<Key, byte[]> keyValue : keyValues.entrySet()) {
         db.put(keyValue.getKey().get(), keyValue.getValue());
       }
@@ -199,7 +198,7 @@ public class MultiGetManyKeysTest {
   private void putKeysAndValues(final ColumnFamilyDescriptor columnFamilyDescriptor,
       final Map<Key, byte[]> keyValues) throws RocksDBException {
     try (final Options options = new Options().setCreateIfMissing(true);
-         final RocksDB db = RocksDB.open(options, dbFolder.getRoot().getAbsolutePath());
+         final RocksDB db = RocksDB.open(options, dbFolder.getAbsolutePath());
          final ColumnFamilyHandle columnFamilyHandle =
              db.createColumnFamily(columnFamilyDescriptor)) {
       for (final Map.Entry<Key, byte[]> keyValue : keyValues.entrySet()) {
@@ -209,7 +208,7 @@ public class MultiGetManyKeysTest {
   }
 
   private void assertKeysAndValues(
-      final List<byte[]> keys, final Map<Key, byte[]> keyValues, final List<byte[]> values) {
+      final List<byte[]> keys, final Map<Key, byte[]> keyValues, final List<byte[]> values, final int numKeys) {
     assertThat(values.size()).isEqualTo(keys.size());
     for (int i = 0; i < numKeys; i++) {
       final Key key = new Key(keys.get(i));

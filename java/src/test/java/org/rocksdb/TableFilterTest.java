@@ -1,9 +1,10 @@
 // Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved.
 package org.rocksdb;
 
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
+import java.io.File;
+
+import org.junit.jupiter.api.io.TempDir;
+import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -12,10 +13,8 @@ import java.util.List;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class TableFilterTest {
-
-  @Rule
-  public TemporaryFolder dbFolder = new TemporaryFolder();
+public class TableFilterTest {  @TempDir
+  public File dbFolder;
 
   @Test
   public void readOptions() throws RocksDBException {
@@ -34,7 +33,7 @@ public class TableFilterTest {
 
       // open database
       try (final RocksDB db = RocksDB.open(opt,
-          dbFolder.getRoot().getAbsolutePath(),
+          dbFolder.getAbsolutePath(),
           columnFamilyDescriptors,
           columnFamilyHandles)) {
 

@@ -5,28 +5,29 @@
 
 package org.rocksdb;
 
+import java.io.File;
+
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.List;
-import org.junit.ClassRule;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
+import org.junit.jupiter.api.extension.RegisterExtension;
+import org.junit.jupiter.api.io.TempDir;
+import org.junit.jupiter.api.Test;
 
 public class SstPartitionerTest {
-  @ClassRule
+  @RegisterExtension
   public static final RocksNativeLibraryResource ROCKS_NATIVE_LIBRARY_RESOURCE =
       new RocksNativeLibraryResource();
 
-  @Rule public TemporaryFolder dbFolder = new TemporaryFolder();
+  @TempDir public File dbFolder;
 
   @Test
   public void sstFixedPrefix() throws RocksDBException {
     try (final SstPartitionerFixedPrefixFactory factory = new SstPartitionerFixedPrefixFactory(4);
          final Options opt =
              new Options().setCreateIfMissing(true).setSstPartitionerFactory(factory);
-         final RocksDB db = RocksDB.open(opt, dbFolder.getRoot().getAbsolutePath())) {
+         final RocksDB db = RocksDB.open(opt, dbFolder.getAbsolutePath())) {
       // writing (long)100 under key
       db.put("aaaa1".getBytes(), "A".getBytes());
       db.put("bbbb1".getBytes(), "B".getBytes());
@@ -51,7 +52,7 @@ public class SstPartitionerTest {
             new SstPartitionerFixedPrefixFactory(4)));
 
     try (final Options opt = new Options().setCreateIfMissing(true);
-         final RocksDB db = RocksDB.open(opt, dbFolder.getRoot().getAbsolutePath())) {
+         final RocksDB db = RocksDB.open(opt, dbFolder.getAbsolutePath())) {
       final ColumnFamilyHandle columnFamilyHandle = db.createColumnFamily(cfDescriptor);
 
       // writing (long)100 under key

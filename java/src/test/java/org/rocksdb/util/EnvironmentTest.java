@@ -7,9 +7,10 @@ package org.rocksdb.util;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.lang.reflect.Field;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 public class EnvironmentTest {
   private static final String ARCH_FIELD_NAME = "ARCH";
@@ -23,7 +24,7 @@ public class EnvironmentTest {
   private static String INITIAL_MUSL_ENVIRONMENT;
   private static Boolean INITIAL_MUSL_LIBC;
 
-  @BeforeClass
+  @BeforeAll
   public static void saveState() {
     INITIAL_ARCH = getEnvironmentClassField(ARCH_FIELD_NAME);
     INITIAL_OS = getEnvironmentClassField(OS_FIELD_NAME);
@@ -104,15 +105,17 @@ public class EnvironmentTest {
         isEqualTo("librocksdbjni.so");
   }
 
-  @Test(expected = UnsupportedOperationException.class)
+  @Test
   public void aix32() {
-    // AIX
-    setEnvironmentClassFields("aix", "32");
-    assertThat(Environment.isWindows()).isFalse();
-    assertThat(Environment.getJniLibraryExtension()).
-        isEqualTo(".so");
-    assertThat(Environment.getJniLibraryFileName("rocksdb")).isEqualTo("blah");
-    assertThat(Environment.getFallbackJniLibraryFileName("rocksdb")).isNull();
+    assertThrows(UnsupportedOperationException.class, () -> {
+        // AIX
+        setEnvironmentClassFields("aix", "32");
+        assertThat(Environment.isWindows()).isFalse();
+        assertThat(Environment.getJniLibraryExtension()).
+            isEqualTo(".so");
+        assertThat(Environment.getJniLibraryFileName("rocksdb")).isEqualTo("blah");
+        assertThat(Environment.getFallbackJniLibraryFileName("rocksdb")).isNull();
+    });
   }
 
   @Test
@@ -259,7 +262,7 @@ public class EnvironmentTest {
     setEnvironmentClassField(ARCH_FIELD_NAME, osArch);
   }
 
-  @AfterClass
+  @AfterAll
   public static void restoreState() {
     setEnvironmentClassField(OS_FIELD_NAME, INITIAL_OS);
     setEnvironmentClassField(ARCH_FIELD_NAME, INITIAL_ARCH);

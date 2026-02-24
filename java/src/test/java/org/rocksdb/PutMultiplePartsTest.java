@@ -10,35 +10,30 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 
-@RunWith(Parameterized.class)
+import java.util.stream.IntStream;
+import org.junit.jupiter.api.io.TempDir;
+import java.io.File;
+
 public class PutMultiplePartsTest {
-  @Parameterized.Parameters
-  public static List<Integer> data() {
-    return Arrays.asList(2, 3, 250, 20000);
+
+  static IntStream parameters() {
+    return IntStream.of(2, 3, 250, 20000);
   }
 
-  @Rule public TemporaryFolder dbFolder = new TemporaryFolder();
+  @TempDir
+  File dbFolder;
 
-  private final int numParts;
-
-  public PutMultiplePartsTest(final Integer numParts) {
-    this.numParts = numParts;
-  }
-
-  @Test
-  public void putUntracked() throws RocksDBException {
+  @ParameterizedTest
+  @MethodSource("parameters")
+  public void putUntracked(final int numParts) throws RocksDBException {
     try (final Options options = new Options().setCreateIfMissing(true);
          final TransactionDBOptions txnDbOptions = new TransactionDBOptions();
          final TransactionDB txnDB =
-             TransactionDB.open(options, txnDbOptions, dbFolder.getRoot().getAbsolutePath())) {
+             TransactionDB.open(options, txnDbOptions, dbFolder.getAbsolutePath())) {
       try (final Transaction transaction = txnDB.beginTransaction(new WriteOptions())) {
         final byte[][] keys = generateItems("key", ":", numParts);
         final byte[][] values = generateItems("value", "", numParts);
@@ -48,15 +43,16 @@ public class PutMultiplePartsTest {
       txnDB.syncWal();
     }
 
-    validateResults();
+    validateResults(numParts);
   }
 
-  @Test
-  public void put() throws RocksDBException {
+  @ParameterizedTest
+  @MethodSource("parameters")
+  public void put(final int numParts) throws RocksDBException {
     try (final Options options = new Options().setCreateIfMissing(true);
          final TransactionDBOptions txnDbOptions = new TransactionDBOptions();
          final TransactionDB txnDB =
-             TransactionDB.open(options, txnDbOptions, dbFolder.getRoot().getAbsolutePath())) {
+             TransactionDB.open(options, txnDbOptions, dbFolder.getAbsolutePath())) {
       try (final Transaction transaction = txnDB.beginTransaction(new WriteOptions())) {
         final byte[][] keys = generateItems("key", ":", numParts);
         final byte[][] values = generateItems("value", "", numParts);
@@ -66,15 +62,16 @@ public class PutMultiplePartsTest {
       txnDB.syncWal();
     }
 
-    validateResults();
+    validateResults(numParts);
   }
 
-  @Test
-  public void putUntrackedCF() throws RocksDBException {
+  @ParameterizedTest
+  @MethodSource("parameters")
+  public void putUntrackedCF(final int numParts) throws RocksDBException {
     try (final Options options = new Options().setCreateIfMissing(true);
          final TransactionDBOptions txnDbOptions = new TransactionDBOptions();
          final TransactionDB txnDB =
-             TransactionDB.open(options, txnDbOptions, dbFolder.getRoot().getAbsolutePath());
+             TransactionDB.open(options, txnDbOptions, dbFolder.getAbsolutePath());
          final ColumnFamilyHandle columnFamilyHandle =
              txnDB.createColumnFamily(new ColumnFamilyDescriptor("cfTest".getBytes()))) {
       try (final Transaction transaction = txnDB.beginTransaction(new WriteOptions())) {
@@ -86,14 +83,16 @@ public class PutMultiplePartsTest {
       txnDB.syncWal();
     }
 
-    validateResultsCF();
+    validateResultsCF(numParts);
   }
-  @Test
-  public void putCF() throws RocksDBException {
+
+  @ParameterizedTest
+  @MethodSource("parameters")
+  public void putCF(final int numParts) throws RocksDBException {
     try (final Options options = new Options().setCreateIfMissing(true);
          final TransactionDBOptions txnDbOptions = new TransactionDBOptions();
          final TransactionDB txnDB =
-             TransactionDB.open(options, txnDbOptions, dbFolder.getRoot().getAbsolutePath());
+             TransactionDB.open(options, txnDbOptions, dbFolder.getAbsolutePath());
          final ColumnFamilyHandle columnFamilyHandle =
              txnDB.createColumnFamily(new ColumnFamilyDescriptor("cfTest".getBytes()))) {
       try (final Transaction transaction = txnDB.beginTransaction(new WriteOptions())) {
@@ -105,11 +104,11 @@ public class PutMultiplePartsTest {
       txnDB.syncWal();
     }
 
-    validateResultsCF();
+    validateResultsCF(numParts);
   }
 
-  private void validateResults() throws RocksDBException {
-    try (final RocksDB db = RocksDB.open(new Options(), dbFolder.getRoot().getAbsolutePath())) {
+  private void validateResults(final int numParts) throws RocksDBException {
+    try (final RocksDB db = RocksDB.open(new Options(), dbFolder.getAbsolutePath())) {
       final List<byte[]> keys = generateItemsAsList("key", ":", numParts);
       final byte[][] values = generateItems("value", "", numParts);
 
@@ -126,12 +125,12 @@ public class PutMultiplePartsTest {
     }
   }
 
-  private void validateResultsCF() throws RocksDBException {
+  private void validateResultsCF(final int numParts) throws RocksDBException {
     final List<ColumnFamilyDescriptor> columnFamilyDescriptors = new ArrayList<>();
     columnFamilyDescriptors.add(new ColumnFamilyDescriptor("cfTest".getBytes()));
     columnFamilyDescriptors.add(new ColumnFamilyDescriptor("default".getBytes()));
     final List<ColumnFamilyHandle> columnFamilyHandles = new ArrayList<>();
-    try (final RocksDB db = RocksDB.open(new DBOptions(), dbFolder.getRoot().getAbsolutePath(),
+    try (final RocksDB db = RocksDB.open(new DBOptions(), dbFolder.getAbsolutePath(),
              columnFamilyDescriptors, columnFamilyHandles)) {
       final List<byte[]> keys = generateItemsAsList("key", ":", numParts);
       final byte[][] values = generateItems("value", "", numParts);

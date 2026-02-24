@@ -5,18 +5,18 @@
 
 package org.rocksdb;
 
+import java.io.File;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.nio.charset.StandardCharsets;
 import java.util.EnumSet;
-import org.junit.ClassRule;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
+import org.junit.jupiter.api.extension.RegisterExtension;
+import org.junit.jupiter.api.io.TempDir;
+import org.junit.jupiter.api.Test;
 
-public class StatisticsTest {
-  @Rule
-  public TemporaryFolder dbFolder = new TemporaryFolder();
+public class StatisticsTest {  @TempDir
+  public File dbFolder;
 
   @Test
   public void createStatistics() throws RocksDBException {
@@ -41,7 +41,7 @@ public class StatisticsTest {
              .setStatistics(statistics)
              .setCreateIfMissing(true);
          final RocksDB db = RocksDB.open(opt,
-             dbFolder.getRoot().getAbsolutePath())) {
+             dbFolder.getAbsolutePath())) {
 
       final byte[] key = "some-key".getBytes(StandardCharsets.UTF_8);
       final byte[] value = "some-value".getBytes(StandardCharsets.UTF_8);
@@ -62,7 +62,7 @@ public class StatisticsTest {
              .setStatistics(statistics)
              .setCreateIfMissing(true);
          final RocksDB db = RocksDB.open(opt,
-             dbFolder.getRoot().getAbsolutePath())) {
+             dbFolder.getAbsolutePath())) {
 
       final byte[] key = "some-key".getBytes(StandardCharsets.UTF_8);
       final byte[] value = "some-value".getBytes(StandardCharsets.UTF_8);
@@ -87,7 +87,7 @@ public class StatisticsTest {
              .setStatistics(statistics)
              .setCreateIfMissing(true);
          final RocksDB db = RocksDB.open(opt,
-             dbFolder.getRoot().getAbsolutePath())) {
+             dbFolder.getAbsolutePath())) {
 
       final byte[] key = "some-key".getBytes(StandardCharsets.UTF_8);
       final byte[] value = "some-value".getBytes(StandardCharsets.UTF_8);
@@ -118,7 +118,7 @@ public class StatisticsTest {
              .setStatistics(statistics)
              .setCreateIfMissing(true);
          final RocksDB db = RocksDB.open(opt,
-             dbFolder.getRoot().getAbsolutePath())) {
+             dbFolder.getAbsolutePath())) {
 
       final byte[] key = "some-key".getBytes(StandardCharsets.UTF_8);
       final byte[] value = "some-value".getBytes(StandardCharsets.UTF_8);
@@ -138,7 +138,7 @@ public class StatisticsTest {
              .setStatistics(statistics)
              .setCreateIfMissing(true);
          final RocksDB db = RocksDB.open(opt,
-             dbFolder.getRoot().getAbsolutePath())) {
+             dbFolder.getAbsolutePath())) {
 
       final byte[] key = "some-key".getBytes(StandardCharsets.UTF_8);
       final byte[] value = "some-value".getBytes(StandardCharsets.UTF_8);
@@ -165,7 +165,7 @@ public class StatisticsTest {
              .setStatistics(statistics)
              .setCreateIfMissing(true);
          final RocksDB db = RocksDB.open(opt,
-             dbFolder.getRoot().getAbsolutePath())) {
+             dbFolder.getAbsolutePath())) {
       assertThat(statistics.toString()).isNotNull();
     }
   }

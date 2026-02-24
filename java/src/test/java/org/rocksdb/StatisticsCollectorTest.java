@@ -5,23 +5,24 @@
 
 package org.rocksdb;
 
+import java.io.File;
+
 import java.util.Collections;
 
-import org.junit.ClassRule;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
+import org.junit.jupiter.api.extension.RegisterExtension;
+import org.junit.jupiter.api.io.TempDir;
+import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class StatisticsCollectorTest {
 
-  @ClassRule
+  @RegisterExtension
   public static final RocksNativeLibraryResource ROCKS_NATIVE_LIBRARY_RESOURCE =
       new RocksNativeLibraryResource();
 
-  @Rule
-  public TemporaryFolder dbFolder = new TemporaryFolder();
+  @TempDir
+  public File dbFolder;
 
   @Test
   public void statisticsCollector()
@@ -31,7 +32,7 @@ public class StatisticsCollectorTest {
         .setStatistics(statistics)
         .setCreateIfMissing(true);
          final RocksDB db = RocksDB.open(opt,
-             dbFolder.getRoot().getAbsolutePath())) {
+             dbFolder.getAbsolutePath())) {
 
       try(final Statistics stats = opt.statistics()) {
 

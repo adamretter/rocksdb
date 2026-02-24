@@ -5,14 +5,15 @@
 
 package org.rocksdb;
 
-import org.junit.rules.ExternalResource;
+import org.junit.jupiter.api.extension.BeforeAllCallback;
+import org.junit.jupiter.api.extension.ExtensionContext;
 
 /**
- * Resource to load the RocksDB JNI library.
+ * Extension to load the RocksDB JNI library.
  */
-public class RocksNativeLibraryResource extends ExternalResource {
+public class RocksNativeLibraryResource implements BeforeAllCallback {
   @Override
-  protected void before() {
+  public void beforeAll(ExtensionContext context) {
     RocksDB.loadLibrary();
   }
 }

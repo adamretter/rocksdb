@@ -6,19 +6,21 @@
 package org.rocksdb;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
-import org.junit.ClassRule;
-import org.junit.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
+import org.junit.jupiter.api.Test;
 
 public class DBOptionsTest {
 
-  @ClassRule
+  @RegisterExtension
   public static final RocksNativeLibraryResource ROCKS_NATIVE_LIBRARY_RESOURCE =
       new RocksNativeLibraryResource();
 
@@ -62,19 +64,23 @@ public class DBOptionsTest {
     }
   }
 
-  @Test(expected = IllegalArgumentException.class)
+  @Test
   public void failDBOptionsFromPropsWithNullValue() {
-    try(final DBOptions opt = DBOptions.getDBOptionsFromProps(null)) {
-      //no-op
-    }
+    assertThrows(IllegalArgumentException.class, () -> {
+        try(final DBOptions opt = DBOptions.getDBOptionsFromProps(null)) {
+          //no-op
+        }
+    });
   }
 
-  @Test(expected = IllegalArgumentException.class)
+  @Test
   public void failDBOptionsFromPropsWithEmptyProps() {
-    try(final DBOptions opt = DBOptions.getDBOptionsFromProps(
-        new Properties())) {
-      //no-op
-    }
+    assertThrows(IllegalArgumentException.class, () -> {
+        try(final DBOptions opt = DBOptions.getDBOptionsFromProps(
+            new Properties())) {
+          //no-op
+        }
+    });
   }
 
   @Test

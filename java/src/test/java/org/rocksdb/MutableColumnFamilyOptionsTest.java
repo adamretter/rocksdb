@@ -4,12 +4,13 @@
 //  (found in the LICENSE.Apache file in the root directory).
 package org.rocksdb;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.rocksdb.MutableColumnFamilyOptions.MutableColumnFamilyOptionsBuilder;
 
 import java.util.NoSuchElementException;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 public class MutableColumnFamilyOptionsTest {
 
@@ -29,12 +30,14 @@ public class MutableColumnFamilyOptionsTest {
     assertThat(builder.paranoidFileChecks()).isEqualTo(true);
   }
 
-  @Test(expected = NoSuchElementException.class)
+  @Test
   public void builder_getWhenNotSet() {
-    final MutableColumnFamilyOptionsBuilder builder =
-        MutableColumnFamilyOptions.builder();
+    assertThrows(NoSuchElementException.class, () -> {
+        final MutableColumnFamilyOptionsBuilder builder =
+            MutableColumnFamilyOptions.builder();
 
-    builder.writeBufferSize();
+        builder.writeBufferSize();
+    });
   }
 
   @Test

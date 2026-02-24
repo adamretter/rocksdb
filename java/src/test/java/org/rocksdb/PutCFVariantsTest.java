@@ -14,14 +14,13 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import org.junit.ClassRule;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
+import org.junit.jupiter.api.extension.RegisterExtension;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
+import java.util.stream.Stream;
+import org.junit.jupiter.api.io.TempDir;
+import java.io.File;
 
-@RunWith(Parameterized.class)
 public class PutCFVariantsTest {
   @FunctionalInterface
   interface FunctionCFPut<PDatabase, PColumnFamilyHandle, PLeft, PRight> {
@@ -29,10 +28,8 @@ public class PutCFVariantsTest {
         throws RocksDBException;
   }
 
-  @Parameterized.Parameters
-  public static List<PutCFVariantsTest.FunctionCFPut<RocksDB, ColumnFamilyHandle, byte[], byte[]>>
-  data() {
-    return Arrays.asList(RocksDB::put,
+  public static Stream<PutCFVariantsTest.FunctionCFPut<RocksDB, ColumnFamilyHandle, byte[], byte[]>> parameters() {
+    return Stream.of(RocksDB::put,
         (db, cfh, left, right)
             -> db.put(cfh, new WriteOptions(), left, right),
         (db, cfh, left, right)
@@ -69,17 +66,16 @@ public class PutCFVariantsTest {
         });
   }
 
-  @Parameterized.Parameter
-  public PutCFVariantsTest.FunctionCFPut<RocksDB, ColumnFamilyHandle, byte[], byte[]> putFunction;
-
-  @ClassRule
+  @RegisterExtension
   public static final RocksNativeLibraryResource ROCKS_NATIVE_LIBRARY_RESOURCE =
       new RocksNativeLibraryResource();
 
-  @Rule public TemporaryFolder dbFolder = new TemporaryFolder();
+  @TempDir
+  File dbFolder;
 
-  @Test
-  public void writeAndRead() throws InterruptedException, RocksDBException {
+  @ParameterizedTest
+  @MethodSource("parameters")
+  public void writeAndRead(final PutCFVariantsTest.FunctionCFPut<RocksDB, ColumnFamilyHandle, byte[], byte[]> putFunction) throws InterruptedException, RocksDBException {
     try (final UInt64AddOperator uint64AddOperator = new UInt64AddOperator();
          final ColumnFamilyOptions cfOpt1 =
              new ColumnFamilyOptions().setMergeOperator(uint64AddOperator);
@@ -92,7 +88,7 @@ public class PutCFVariantsTest {
       try (final DBOptions opt =
                new DBOptions().setCreateIfMissing(true).setCreateMissingColumnFamilies(true);
            final RocksDB db = RocksDB.open(
-               opt, dbFolder.getRoot().getAbsolutePath(), cfDescriptors, columnFamilyHandleList)) {
+               opt, dbFolder.getAbsolutePath(), cfDescriptors, columnFamilyHandleList)) {
         try {
           // writing (long)100 under key
           putFunction.apply(

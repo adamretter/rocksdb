@@ -5,6 +5,8 @@
 
 package org.rocksdb;
 
+import java.io.File;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.nio.ByteBuffer;
@@ -12,19 +14,19 @@ import java.nio.ByteOrder;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import org.junit.ClassRule;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
+import org.junit.jupiter.api.extension.RegisterExtension;
+import org.junit.jupiter.api.io.TempDir;
+import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 public class MergeTest {
 
-  @ClassRule
+  @RegisterExtension
   public static final RocksNativeLibraryResource ROCKS_NATIVE_LIBRARY_RESOURCE =
       new RocksNativeLibraryResource();
 
-  @Rule
-  public TemporaryFolder dbFolder = new TemporaryFolder();
+  @TempDir
+  public File dbFolder;
 
   @Test
   public void stringOption()
@@ -33,7 +35,7 @@ public class MergeTest {
         .setCreateIfMissing(true)
         .setMergeOperatorName("stringappend");
          final RocksDB db = RocksDB.open(opt,
-             dbFolder.getRoot().getAbsolutePath())) {
+             dbFolder.getAbsolutePath())) {
       // writing aa under key
       db.put("key".getBytes(), "aa".getBytes());
       // merge bb under key
@@ -67,7 +69,7 @@ public class MergeTest {
         .setCreateIfMissing(true)
         .setMergeOperatorName("uint64add");
          final RocksDB db = RocksDB.open(opt,
-             dbFolder.getRoot().getAbsolutePath())) {
+             dbFolder.getAbsolutePath())) {
       // writing (long)100 under key
       db.put("key".getBytes(), longToByteArray(100));
       // merge (long)1 under key
@@ -98,7 +100,7 @@ public class MergeTest {
           .setCreateIfMissing(true)
           .setCreateMissingColumnFamilies(true);
            final RocksDB db = RocksDB.open(opt,
-               dbFolder.getRoot().getAbsolutePath(), cfDescriptors,
+               dbFolder.getAbsolutePath(), cfDescriptors,
                columnFamilyHandleList)) {
         try {
           // writing aa under key
@@ -139,7 +141,7 @@ public class MergeTest {
           .setCreateIfMissing(true)
           .setCreateMissingColumnFamilies(true);
            final RocksDB db = RocksDB.open(opt,
-               dbFolder.getRoot().getAbsolutePath(), cfDescriptors,
+               dbFolder.getAbsolutePath(), cfDescriptors,
                columnFamilyHandleList)) {
         try {
           // writing (long)100 under key
@@ -168,7 +170,7 @@ public class MergeTest {
             .setCreateIfMissing(true)
             .setMergeOperator(stringAppendOperator);
          final RocksDB db = RocksDB.open(opt,
-             dbFolder.getRoot().getAbsolutePath())) {
+             dbFolder.getAbsolutePath())) {
       // Writing aa under key
       db.put("key".getBytes(), "aa".getBytes());
 
@@ -190,7 +192,7 @@ public class MergeTest {
             .setCreateIfMissing(true)
             .setMergeOperator(uint64AddOperator);
          final RocksDB db = RocksDB.open(opt,
-             dbFolder.getRoot().getAbsolutePath())) {
+             dbFolder.getAbsolutePath())) {
       // Writing (long)100 under key
       db.put("key".getBytes(), longToByteArray(100));
 
@@ -222,7 +224,7 @@ public class MergeTest {
           .setCreateIfMissing(true)
           .setCreateMissingColumnFamilies(true);
            final RocksDB db = RocksDB.open(opt,
-               dbFolder.getRoot().getAbsolutePath(), cfDescriptors,
+               dbFolder.getAbsolutePath(), cfDescriptors,
                columnFamilyHandleList)
       ) {
         try {
@@ -284,7 +286,7 @@ public class MergeTest {
           .setCreateIfMissing(true)
           .setCreateMissingColumnFamilies(true);
            final RocksDB db = RocksDB.open(opt,
-               dbFolder.getRoot().getAbsolutePath(), cfDescriptors,
+               dbFolder.getAbsolutePath(), cfDescriptors,
                columnFamilyHandleList)
       ) {
         try {
@@ -336,7 +338,7 @@ public class MergeTest {
               .setCreateIfMissing(true)
               .setMergeOperator(stringAppendOperator);
            final RocksDB db = RocksDB.open(opt,
-                   dbFolder.getRoot().getAbsolutePath())) {
+                   dbFolder.getAbsolutePath())) {
         //no-op
       }
 
@@ -344,7 +346,7 @@ public class MergeTest {
       try (final Options opt = new Options()
               .setMergeOperator(stringAppendOperator);
            final RocksDB db = RocksDB.open(opt,
-                   dbFolder.getRoot().getAbsolutePath())) {
+                   dbFolder.getAbsolutePath())) {
         //no-op
       }
 
@@ -353,7 +355,7 @@ public class MergeTest {
            final Options opt = new Options()
               .setMergeOperator(stringAppendOperator2);
            final RocksDB db = RocksDB.open(opt,
-                   dbFolder.getRoot().getAbsolutePath())) {
+                   dbFolder.getAbsolutePath())) {
         //no-op
       }
 
@@ -363,7 +365,7 @@ public class MergeTest {
            final StringAppendOperator newStringAppendOperator = new StringAppendOperator()) {
         opt.setMergeOperator(newStringAppendOperator);
         try (final RocksDB db = RocksDB.open(opt,
-                dbFolder.getRoot().getAbsolutePath())) {
+                dbFolder.getAbsolutePath())) {
           //no-op
         }
       }
@@ -378,7 +380,7 @@ public class MergeTest {
               .setCreateIfMissing(true)
               .setMergeOperator(uint64AddOperator);
            final RocksDB db = RocksDB.open(opt,
-                   dbFolder.getRoot().getAbsolutePath())) {
+                   dbFolder.getAbsolutePath())) {
         //no-op
       }
 
@@ -386,7 +388,7 @@ public class MergeTest {
       try (final Options opt = new Options()
               .setMergeOperator(uint64AddOperator);
            final RocksDB db = RocksDB.open(opt,
-                   dbFolder.getRoot().getAbsolutePath())) {
+                   dbFolder.getAbsolutePath())) {
         //no-op
       }
 
@@ -395,7 +397,7 @@ public class MergeTest {
            final Options opt = new Options()
               .setMergeOperator(uint64AddOperator2);
            final RocksDB db = RocksDB.open(opt,
-                   dbFolder.getRoot().getAbsolutePath())) {
+                   dbFolder.getAbsolutePath())) {
         //no-op
       }
 
@@ -405,7 +407,7 @@ public class MergeTest {
            final UInt64AddOperator newUInt64AddOperator = new UInt64AddOperator()) {
         opt.setMergeOperator(newUInt64AddOperator);
         try (final RocksDB db = RocksDB.open(opt,
-                dbFolder.getRoot().getAbsolutePath())) {
+                dbFolder.getAbsolutePath())) {
           //no-op
         }
       }
@@ -417,7 +419,7 @@ public class MergeTest {
     try (final StringAppendOperator stringAppendOperator = new StringAppendOperator("");
          final Options opt =
              new Options().setCreateIfMissing(true).setMergeOperator(stringAppendOperator);
-         final RocksDB db = RocksDB.open(opt, dbFolder.getRoot().getAbsolutePath())) {
+         final RocksDB db = RocksDB.open(opt, dbFolder.getAbsolutePath())) {
       db.put("key".getBytes(), "aa".getBytes());
       db.merge("key".getBytes(), "bb".getBytes());
       final byte[] value = db.get("key".getBytes());
@@ -430,7 +432,7 @@ public class MergeTest {
     try (final StringAppendOperator stringAppendOperator = new StringAppendOperator("<>");
          final Options opt =
              new Options().setCreateIfMissing(true).setMergeOperator(stringAppendOperator);
-         final RocksDB db = RocksDB.open(opt, dbFolder.getRoot().getAbsolutePath())) {
+         final RocksDB db = RocksDB.open(opt, dbFolder.getAbsolutePath())) {
       db.put("key".getBytes(), "aa".getBytes());
       db.merge("key".getBytes(), "bb".getBytes());
       final byte[] value = db.get("key".getBytes());
@@ -448,18 +450,21 @@ public class MergeTest {
     }
   }
 
-  @Test(expected = IllegalArgumentException.class)
+  @Test
   public void nullStringInSetMergeOperatorByNameOptions() {
-    try (final Options opt = new Options()) {
-      opt.setMergeOperatorName(null);
-    }
+    assertThrows(IllegalArgumentException.class, () -> {
+        try (final Options opt = new Options()) {
+          opt.setMergeOperatorName(null);
+        }
+    });
   }
 
-  @Test(expected = IllegalArgumentException.class)
-  public void
-  nullStringInSetMergeOperatorByNameColumnFamilyOptions() {
-    try (final ColumnFamilyOptions opt = new ColumnFamilyOptions()) {
-      opt.setMergeOperatorName(null);
-    }
+  @Test
+  public void  nullStringInSetMergeOperatorByNameColumnFamilyOptions() {
+    assertThrows(IllegalArgumentException.class, () -> {
+        try (final ColumnFamilyOptions opt = new ColumnFamilyOptions()) {
+          opt.setMergeOperatorName(null);
+        }
+    });
   }
 }

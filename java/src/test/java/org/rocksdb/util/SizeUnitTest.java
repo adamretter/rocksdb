@@ -4,7 +4,7 @@
 //  (found in the LICENSE.Apache file in the root directory).
 package org.rocksdb.util;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

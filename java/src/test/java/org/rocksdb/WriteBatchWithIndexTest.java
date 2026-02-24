@@ -9,6 +9,8 @@
 
 package org.rocksdb;
 
+import java.io.File;
+
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -16,26 +18,26 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import org.junit.ClassRule;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
+import org.junit.jupiter.api.extension.RegisterExtension;
+import org.junit.jupiter.api.io.TempDir;
+import org.junit.jupiter.api.Test;
 import org.rocksdb.util.ByteBufferAllocator;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 public class WriteBatchWithIndexTest {
 
-  @ClassRule
+  @RegisterExtension
   public static final RocksNativeLibraryResource ROCKS_NATIVE_LIBRARY_RESOURCE =
       new RocksNativeLibraryResource();
 
-  @Rule
-  public TemporaryFolder dbFolder = new TemporaryFolder();
+  @TempDir
+  public File dbFolder;
 
   @Test
   public void readYourOwnWrites() throws RocksDBException {
     try (final Options options = new Options().setCreateIfMissing(true);
          final RocksDB db = RocksDB.open(options,
-             dbFolder.getRoot().getAbsolutePath())) {
+             dbFolder.getAbsolutePath())) {
 
       final byte[] k1 = "key1".getBytes();
       final byte[] v1 = "value1".getBytes();
@@ -116,7 +118,7 @@ public class WriteBatchWithIndexTest {
     try (final DBOptions options =
              new DBOptions().setCreateIfMissing(true).setCreateMissingColumnFamilies(true);
          final RocksDB db = RocksDB.open(
-             options, dbFolder.getRoot().getAbsolutePath(), cfNames, columnFamilyHandleList)) {
+             options, dbFolder.getAbsolutePath(), cfNames, columnFamilyHandleList)) {
       final ColumnFamilyHandle newCf = columnFamilyHandleList.get(1);
 
       try {
@@ -215,7 +217,7 @@ public class WriteBatchWithIndexTest {
     try (final DBOptions options =
              new DBOptions().setCreateIfMissing(true).setCreateMissingColumnFamilies(true);
          final RocksDB db = RocksDB.open(
-             options, dbFolder.getRoot().getAbsolutePath(), cfNames, columnFamilyHandleList)) {
+             options, dbFolder.getAbsolutePath(), cfNames, columnFamilyHandleList)) {
       final ColumnFamilyHandle newCf = columnFamilyHandleList.get(1);
 
       try {
@@ -334,7 +336,7 @@ public class WriteBatchWithIndexTest {
     try (final DBOptions options =
              new DBOptions().setCreateIfMissing(true).setCreateMissingColumnFamilies(true);
          final RocksDB db = RocksDB.open(
-             options, dbFolder.getRoot().getAbsolutePath(), cfNames, columnFamilyHandleList)) {
+             options, dbFolder.getAbsolutePath(), cfNames, columnFamilyHandleList)) {
       final ColumnFamilyHandle newCf = columnFamilyHandleList.get(1);
 
       try {
@@ -427,7 +429,7 @@ public class WriteBatchWithIndexTest {
   public void writeBatchWithIndex() throws RocksDBException {
     try (final Options options = new Options().setCreateIfMissing(true);
          final RocksDB db = RocksDB.open(options,
-             dbFolder.getRoot().getAbsolutePath())) {
+             dbFolder.getAbsolutePath())) {
 
       final byte[] k1 = "key1".getBytes();
       final byte[] v1 = "value1".getBytes();
@@ -450,7 +452,7 @@ public class WriteBatchWithIndexTest {
   @Test
   public void write_writeBatchWithIndexDirect() throws RocksDBException {
     try (final Options options = new Options().setCreateIfMissing(true);
-         final RocksDB db = RocksDB.open(options, dbFolder.getRoot().getAbsolutePath())) {
+         final RocksDB db = RocksDB.open(options, dbFolder.getAbsolutePath())) {
       final ByteBuffer k1 = ByteBuffer.allocateDirect(16);
       final ByteBuffer v1 = ByteBuffer.allocateDirect(16);
       final ByteBuffer k2 = ByteBuffer.allocateDirect(16);
@@ -674,7 +676,7 @@ public class WriteBatchWithIndexTest {
   public void savePoints() throws RocksDBException {
     try (final Options options = new Options().setCreateIfMissing(true);
          final RocksDB db = RocksDB.open(options,
-             dbFolder.getRoot().getAbsolutePath())) {
+             dbFolder.getAbsolutePath())) {
       try (final WriteBatchWithIndex wbwi = new WriteBatchWithIndex(true);
            final ReadOptions readOptions = new ReadOptions()) {
         wbwi.put("k1".getBytes(), "v1".getBytes());
@@ -756,23 +758,27 @@ public class WriteBatchWithIndexTest {
     }
   }
 
-  @Test(expected = RocksDBException.class)
+  @Test
   public void restorePoints_withoutSavePoints() throws RocksDBException {
-    try (final WriteBatchWithIndex wbwi = new WriteBatchWithIndex()) {
-      wbwi.rollbackToSavePoint();
-    }
+    assertThrows(RocksDBException.class, () -> {
+        try (final WriteBatchWithIndex wbwi = new WriteBatchWithIndex()) {
+          wbwi.rollbackToSavePoint();
+        }
+    });
   }
 
-  @Test(expected = RocksDBException.class)
+  @Test
   public void restorePoints_withoutSavePoints_nested() throws RocksDBException {
-    try (final WriteBatchWithIndex wbwi = new WriteBatchWithIndex()) {
+    assertThrows(RocksDBException.class, () -> {
+        try (final WriteBatchWithIndex wbwi = new WriteBatchWithIndex()) {
 
-      wbwi.setSavePoint();
-      wbwi.rollbackToSavePoint();
+          wbwi.setSavePoint();
+          wbwi.rollbackToSavePoint();
 
-      // without previous corresponding setSavePoint
-      wbwi.rollbackToSavePoint();
-    }
+          // without previous corresponding setSavePoint
+          wbwi.rollbackToSavePoint();
+        }
+    });
   }
 
   @Test
@@ -800,23 +806,27 @@ public class WriteBatchWithIndexTest {
     }
   }
 
-  @Test(expected = RocksDBException.class)
+  @Test
   public void popSavePoint_withoutSavePoints() throws RocksDBException {
-    try (final WriteBatchWithIndex wbwi = new WriteBatchWithIndex()) {
-      wbwi.popSavePoint();
-    }
+    assertThrows(RocksDBException.class, () -> {
+        try (final WriteBatchWithIndex wbwi = new WriteBatchWithIndex()) {
+          wbwi.popSavePoint();
+        }
+    });
   }
 
-  @Test(expected = RocksDBException.class)
+  @Test
   public void popSavePoint_withoutSavePoints_nested() throws RocksDBException {
-    try (final WriteBatchWithIndex wbwi = new WriteBatchWithIndex()) {
+    assertThrows(RocksDBException.class, () -> {
+        try (final WriteBatchWithIndex wbwi = new WriteBatchWithIndex()) {
 
-      wbwi.setSavePoint();
-      wbwi.popSavePoint();
+          wbwi.setSavePoint();
+          wbwi.popSavePoint();
 
-      // without previous corresponding setSavePoint
-      wbwi.popSavePoint();
-    }
+          // without previous corresponding setSavePoint
+          wbwi.popSavePoint();
+        }
+    });
   }
 
   @Test
@@ -828,13 +838,15 @@ public class WriteBatchWithIndexTest {
     }
   }
 
-  @Test(expected = RocksDBException.class)
+  @Test
   public void maxBytes_over() throws RocksDBException {
-    try (final WriteBatchWithIndex wbwi = new WriteBatchWithIndex()) {
-      wbwi.setMaxBytes(1);
+    assertThrows(RocksDBException.class, () -> {
+        try (final WriteBatchWithIndex wbwi = new WriteBatchWithIndex()) {
+          wbwi.setMaxBytes(1);
 
-      wbwi.put("k1".getBytes(), "v1".getBytes());
-    }
+          wbwi.put("k1".getBytes(), "v1".getBytes());
+        }
+    });
   }
 
   @Test
@@ -905,7 +917,7 @@ public class WriteBatchWithIndexTest {
 
     try (final Options options = new Options().setCreateIfMissing(true);
          final RocksDB db = RocksDB.open(options,
-             dbFolder.getRoot().getAbsolutePath())) {
+             dbFolder.getAbsolutePath())) {
 
       db.put(k1, v1);
       db.put(k2, v2);
@@ -942,7 +954,7 @@ public class WriteBatchWithIndexTest {
 
   @Test
   public void deleteRange() throws RocksDBException {
-    try (final RocksDB db = RocksDB.open(dbFolder.getRoot().getAbsolutePath());
+    try (final RocksDB db = RocksDB.open(dbFolder.getAbsolutePath());
          final WriteBatch batch = new WriteBatch();
          final WriteOptions wOpt = new WriteOptions()) {
       db.put("key1".getBytes(), "value".getBytes());
@@ -967,7 +979,7 @@ public class WriteBatchWithIndexTest {
   @Test
   public void iteratorWithBaseOverwriteTrue() throws RocksDBException {
     try (final Options options = new Options().setCreateIfMissing(true);
-         final RocksDB db = RocksDB.open(options, dbFolder.getRoot().getAbsolutePath())) {
+         final RocksDB db = RocksDB.open(options, dbFolder.getAbsolutePath())) {
       try (final WriteBatchWithIndex wbwi = new WriteBatchWithIndex(true);
            final RocksIterator baseIter = db.newIterator();
            final RocksIterator wbwiIter = wbwi.newIteratorWithBase(baseIter)) {
@@ -993,7 +1005,7 @@ public class WriteBatchWithIndexTest {
     try (final DBOptions options =
              new DBOptions().setCreateIfMissing(true).setCreateMissingColumnFamilies(true);
          final RocksDB db = RocksDB.open(
-             options, dbFolder.getRoot().getAbsolutePath(), cfNames, columnFamilyHandleList)) {
+             options, dbFolder.getAbsolutePath(), cfNames, columnFamilyHandleList)) {
       try (final WriteBatchWithIndex wbwi = new WriteBatchWithIndex(true);
            final RocksIterator baseIter = db.newIterator();
            final RocksIterator wbwiIter =
@@ -1018,7 +1030,7 @@ public class WriteBatchWithIndexTest {
   @Test
   public void iteratorWithBaseOverwriteFalse() throws RocksDBException {
     try (final Options options = new Options().setCreateIfMissing(true);
-         final RocksDB db = RocksDB.open(options, dbFolder.getRoot().getAbsolutePath())) {
+         final RocksDB db = RocksDB.open(options, dbFolder.getAbsolutePath())) {
       try (final WriteBatchWithIndex wbwi = new WriteBatchWithIndex(false);
            final RocksIterator baseIter = db.newIterator();
            final RocksIterator wbwiIter = wbwi.newIteratorWithBase(baseIter)) {
@@ -1044,7 +1056,7 @@ public class WriteBatchWithIndexTest {
     try (final DBOptions options =
              new DBOptions().setCreateIfMissing(true).setCreateMissingColumnFamilies(true);
          final RocksDB db = RocksDB.open(
-             options, dbFolder.getRoot().getAbsolutePath(), cfNames, columnFamilyHandleList)) {
+             options, dbFolder.getAbsolutePath(), cfNames, columnFamilyHandleList)) {
       try (final WriteBatchWithIndex wbwi = new WriteBatchWithIndex(false);
            final RocksIterator baseIter = db.newIterator();
            final RocksIterator wbwiIter =

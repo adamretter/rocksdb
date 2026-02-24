@@ -4,30 +4,35 @@
 //  (found in the LICENSE.Apache file in the root directory).
 package org.rocksdb;
 
+import java.io.File;
+
 import static java.nio.charset.StandardCharsets.UTF_8;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import org.junit.*;
-import org.junit.rules.ExpectedException;
-import org.junit.rules.TemporaryFolder;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.extension.RegisterExtension;
+import org.junit.jupiter.api.io.TempDir;
+
 
 public class KeyExistsTest {
-  @ClassRule
+  @RegisterExtension
   public static final RocksNativeLibraryResource ROCKS_NATIVE_LIBRARY_RESOURCE =
       new RocksNativeLibraryResource();
 
-  @Rule public TemporaryFolder dbFolder = new TemporaryFolder();
+  @TempDir public File dbFolder;
 
-  @Rule public ExpectedException exceptionRule = ExpectedException.none();
 
   List<ColumnFamilyDescriptor> cfDescriptors;
   List<ColumnFamilyHandle> columnFamilyHandleList = new ArrayList<>();
   RocksDB db;
-  @Before
+  @BeforeEach
   public void before() throws RocksDBException {
     cfDescriptors = Arrays.asList(new ColumnFamilyDescriptor(RocksDB.DEFAULT_COLUMN_FAMILY),
         new ColumnFamilyDescriptor("new_cf".getBytes()));
@@ -35,10 +40,10 @@ public class KeyExistsTest {
         new DBOptions().setCreateIfMissing(true).setCreateMissingColumnFamilies(true);
 
     db = RocksDB.open(
-        options, dbFolder.getRoot().getAbsolutePath(), cfDescriptors, columnFamilyHandleList);
+        options, dbFolder.getAbsolutePath(), cfDescriptors, columnFamilyHandleList);
   }
 
-  @After
+  @AfterEach
   public void after() {
     for (final ColumnFamilyHandle columnFamilyHandle : columnFamilyHandleList) {
       columnFamilyHandle.close();
@@ -109,15 +114,17 @@ public class KeyExistsTest {
   @Test
   public void keyExistsArrayIndexOutOfBoundsException() throws RocksDBException {
     db.put("key".getBytes(UTF_8), "value".getBytes(UTF_8));
-    exceptionRule.expect(IndexOutOfBoundsException.class);
-    db.keyExists(null, null, "key".getBytes(UTF_8), 0, 5);
+    assertThrows(IndexOutOfBoundsException.class, () -> {
+      db.keyExists(null, null, "key".getBytes(UTF_8), 0, 5);
+    });
   }
 
   @Test()
   public void keyExistsArrayIndexOutOfBoundsExceptionWrongOffset() throws RocksDBException {
     db.put("key".getBytes(UTF_8), "value".getBytes(UTF_8));
-    exceptionRule.expect(IndexOutOfBoundsException.class);
-    db.keyExists(null, null, "key".getBytes(UTF_8), 6, 2);
+    assertThrows(IndexOutOfBoundsException.class, () -> {
+      db.keyExists(null, null, "key".getBytes(UTF_8), 6, 2);
+    });
   }
 
   @Test

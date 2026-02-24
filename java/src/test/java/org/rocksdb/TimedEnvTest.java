@@ -5,21 +5,22 @@
 
 package org.rocksdb;
 
-import org.junit.ClassRule;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
+import java.io.File;
+
+import org.junit.jupiter.api.extension.RegisterExtension;
+import org.junit.jupiter.api.io.TempDir;
+import org.junit.jupiter.api.Test;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 public class TimedEnvTest {
 
-  @ClassRule
+  @RegisterExtension
   public static final RocksNativeLibraryResource ROCKS_NATIVE_LIBRARY_RESOURCE =
       new RocksNativeLibraryResource();
 
-  @Rule
-  public TemporaryFolder dbFolder = new TemporaryFolder();
+  @TempDir
+  public File dbFolder;
 
   @Test
   public void construct() throws RocksDBException {
@@ -32,7 +33,7 @@ public class TimedEnvTest {
   public void construct_integration() throws RocksDBException {
     try (final Env env = new TimedEnv(Env.getDefault());
          final Options options = new Options().setCreateIfMissing(true).setEnv(env)) {
-      try (final RocksDB db = RocksDB.open(options, dbFolder.getRoot().getPath())) {
+      try (final RocksDB db = RocksDB.open(options, dbFolder.getPath())) {
         db.put("key1".getBytes(UTF_8), "value1".getBytes(UTF_8));
       }
     }

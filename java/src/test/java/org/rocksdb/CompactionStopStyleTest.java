@@ -5,15 +5,18 @@
 
 package org.rocksdb;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 public class CompactionStopStyleTest {
 
-  @Test(expected = IllegalArgumentException.class)
+  @Test
   public void failIfIllegalByteValueProvided() {
-    CompactionStopStyle.getCompactionStopStyle((byte) -1);
+    assertThrows(IllegalArgumentException.class, () -> {
+        CompactionStopStyle.getCompactionStopStyle((byte) -1);
+    });
   }
 
   @Test

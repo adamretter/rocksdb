@@ -5,20 +5,21 @@
 
 package org.rocksdb;
 
-import org.junit.ClassRule;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
+import java.io.File;
+
+import org.junit.jupiter.api.extension.RegisterExtension;
+import org.junit.jupiter.api.io.TempDir;
+import org.junit.jupiter.api.Test;
 
 import java.util.*;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class OptionsUtilTest {
-  @ClassRule
+  @RegisterExtension
   public static final RocksNativeLibraryResource ROCKS_NATIVE_LIBRARY_RESOURCE = new RocksNativeLibraryResource();
 
-  @Rule public TemporaryFolder dbFolder = new TemporaryFolder();
+  @TempDir public File dbFolder;
 
   @Test
   public void loadLatestOptions() throws RocksDBException {
@@ -164,7 +165,7 @@ public class OptionsUtilTest {
 
   @Test
   public void getLatestOptionsFileName() throws RocksDBException {
-    final String dbPath = dbFolder.getRoot().getAbsolutePath();
+    final String dbPath = dbFolder.getAbsolutePath();
     try (final Options options = new Options().setCreateIfMissing(true);
          final RocksDB db = RocksDB.open(options, dbPath)) {
       assertThat(db).isNotNull();
@@ -182,7 +183,7 @@ public class OptionsUtilTest {
   }
 
   private void verifyOptions(final LoaderUnderTest loaderUnderTest) throws RocksDBException {
-    final String dbPath = dbFolder.getRoot().getAbsolutePath();
+    final String dbPath = dbFolder.getAbsolutePath();
     final Options options = new Options()
                                 .setCreateIfMissing(true)
                                 .setParanoidChecks(false)
@@ -255,7 +256,7 @@ public class OptionsUtilTest {
 
   private void verifyTableFormatOptions(final LoaderUnderTest loaderUnderTest)
       throws RocksDBException {
-    final String dbPath = dbFolder.getRoot().getAbsolutePath();
+    final String dbPath = dbFolder.getAbsolutePath();
     final Options options = new Options()
                                 .setCreateIfMissing(true)
                                 .setParanoidChecks(false)

@@ -105,6 +105,9 @@ test:
 run_test:
 	$(MAVEN_CMD) test
 
+run_it:
+	$(MAVEN_CMD) integration-test
+
 db_bench: java
 	cd benchmark; $(MAVEN_CMD) package
 	$(JAVA_CMD) $(JAVA_ARGS) -Djava.library.path=${JAVA_NATIVE_DIR} -cp target/rocksdbjni-$(ROCKSDB_JAVA_VERSION).jar:benchmark/target/rocksdbjni-benchmark-0.0.0-SNAPSHOT.jar org.rocksdb.benchmark.DbBenchmark

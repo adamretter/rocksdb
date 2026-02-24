@@ -6,23 +6,22 @@
 package org.rocksdb;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
 import org.rocksdb.util.ByteBufferAllocator;
 
-@RunWith(Parameterized.class)
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
+import org.junit.jupiter.params.provider.Arguments;
+import java.util.stream.Stream;
+import org.junit.jupiter.api.io.TempDir;
+
 public class SstFileReaderTest {
   private static final String SST_FILE_NAME = "test.sst";
 
@@ -50,19 +49,16 @@ public class SstFileReaderTest {
     private final OpType opType;
   }
 
-  @Rule public TemporaryFolder parentFolder = new TemporaryFolder();
+  @TempDir
+  File parentFolder;
 
-  @Parameterized.Parameters(name = "{0}")
-  public static Iterable<Object[]> parameters() {
-    return Arrays.asList(new Object[][] {
-        {"direct", ByteBufferAllocator.DIRECT}, {"indirect", ByteBufferAllocator.HEAP}});
+  static Stream<Arguments> parameters() {
+    return Stream.of(
+        Arguments.of("direct", ByteBufferAllocator.DIRECT),
+        Arguments.of("indirect", ByteBufferAllocator.HEAP));
   }
 
-  @Parameterized.Parameter() public String name;
-
-  @Parameterized.Parameter(1) public ByteBufferAllocator byteBufferAllocator;
-
-  enum OpType { PUT, PUT_BYTES, MERGE, MERGE_BYTES, DELETE, DELETE_BYTES }
+      enum OpType { PUT, PUT_BYTES, MERGE, MERGE_BYTES, DELETE, DELETE_BYTES }
 
   private File newSstFile(final List<KeyValueWithOp> keyValues)
       throws IOException, RocksDBException {
@@ -72,7 +68,7 @@ public class SstFileReaderTest {
     final SstFileWriter sstFileWriter;
     sstFileWriter = new SstFileWriter(envOptions, options);
 
-    final File sstFile = parentFolder.newFile(SST_FILE_NAME);
+    final File sstFile = new File(parentFolder, SST_FILE_NAME);
     try {
       sstFileWriter.open(sstFile.getAbsolutePath());
       for (final KeyValueWithOp keyValue : keyValues) {
@@ -115,8 +111,9 @@ public class SstFileReaderTest {
     return sstFile;
   }
 
-  @Test
-  public void readSstFile() throws RocksDBException, IOException {
+  @ParameterizedTest
+  @MethodSource("parameters")
+  public void readSstFile(final String name, final ByteBufferAllocator byteBufferAllocator) throws RocksDBException, IOException {
     final List<KeyValueWithOp> keyValues = new ArrayList<>();
     keyValues.add(new KeyValueWithOp("key1", "value1", OpType.PUT));
     keyValues.add(new KeyValueWithOp("key2", "value2", OpType.PUT));

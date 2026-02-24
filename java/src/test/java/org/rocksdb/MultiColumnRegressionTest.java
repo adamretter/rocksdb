@@ -11,22 +11,21 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
-
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
+import org.junit.jupiter.params.provider.Arguments;
+import java.util.stream.Stream;
+import org.junit.jupiter.api.io.TempDir;
+import java.io.File;
 /**
  * Test for changes made by
  * <a link="https://github.com/facebook/rocksdb/issues/9006">transactional multiGet problem</a>
  * the tests here were previously broken by the nonsense removed by that change.
  */
-@RunWith(Parameterized.class)
 public class MultiColumnRegressionTest {
-  @Parameterized.Parameters
-  public static List<Params> data() {
-    return Arrays.asList(new Params(3, 100), new Params(3, 1000000));
+    static Stream<Params> data() {
+    return Stream.of(new Params(3, 100), new Params(3, 1000000));
   }
 
   public static class Params {
@@ -39,16 +38,14 @@ public class MultiColumnRegressionTest {
     }
   }
 
-  @Rule public TemporaryFolder dbFolder = new TemporaryFolder();
+  @TempDir
+  File dbFolder;
 
-  private final Params params;
+    
 
-  public MultiColumnRegressionTest(final Params params) {
-    this.params = params;
-  }
-
-  @Test
-  public void transactionDB() throws RocksDBException {
+  @ParameterizedTest
+  @MethodSource("data")
+  public void transactionDB(final Params params) throws RocksDBException {
     final List<ColumnFamilyDescriptor> columnFamilyDescriptors = new ArrayList<>();
     for (int i = 0; i < params.numColumns; i++) {
       final StringBuilder sb = new StringBuilder();
@@ -57,14 +54,14 @@ public class MultiColumnRegressionTest {
       columnFamilyDescriptors.add(new ColumnFamilyDescriptor(sb.toString().getBytes()));
     }
     try (final Options opt = new Options().setCreateIfMissing(true);
-         final RocksDB db = RocksDB.open(opt, dbFolder.getRoot().getAbsolutePath())) {
+         final RocksDB db = RocksDB.open(opt, dbFolder.getAbsolutePath())) {
       db.createColumnFamilies(columnFamilyDescriptors);
     }
 
     columnFamilyDescriptors.add(new ColumnFamilyDescriptor("default".getBytes()));
     final List<ColumnFamilyHandle> columnFamilyHandles = new ArrayList<>();
     try (final TransactionDB tdb = TransactionDB.open(new DBOptions().setCreateIfMissing(true),
-             new TransactionDBOptions(), dbFolder.getRoot().getAbsolutePath(),
+             new TransactionDBOptions(), dbFolder.getAbsolutePath(),
              columnFamilyDescriptors, columnFamilyHandles)) {
       final WriteOptions writeOptions = new WriteOptions();
       try (final Transaction transaction = tdb.beginTransaction(writeOptions)) {
@@ -82,7 +79,7 @@ public class MultiColumnRegressionTest {
 
     final List<ColumnFamilyHandle> columnFamilyHandles2 = new ArrayList<>();
     try (final TransactionDB tdb = TransactionDB.open(new DBOptions().setCreateIfMissing(true),
-             new TransactionDBOptions(), dbFolder.getRoot().getAbsolutePath(),
+             new TransactionDBOptions(), dbFolder.getAbsolutePath(),
              columnFamilyDescriptors, columnFamilyHandles2)) {
       try (final Transaction transaction = tdb.beginTransaction(new WriteOptions())) {
         final ReadOptions readOptions = new ReadOptions();
@@ -99,8 +96,9 @@ public class MultiColumnRegressionTest {
     }
   }
 
-  @Test
-  public void optimisticDB() throws RocksDBException {
+  @ParameterizedTest
+  @MethodSource("data")
+  public void optimisticDB(final Params params) throws RocksDBException {
     final List<ColumnFamilyDescriptor> columnFamilyDescriptors = new ArrayList<>();
     for (int i = 0; i < params.numColumns; i++) {
       columnFamilyDescriptors.add(new ColumnFamilyDescriptor("default".getBytes()));
@@ -109,7 +107,7 @@ public class MultiColumnRegressionTest {
     columnFamilyDescriptors.add(new ColumnFamilyDescriptor("default".getBytes()));
     final List<ColumnFamilyHandle> columnFamilyHandles = new ArrayList<>();
     try (final OptimisticTransactionDB otdb = OptimisticTransactionDB.open(
-             new DBOptions().setCreateIfMissing(true), dbFolder.getRoot().getAbsolutePath(),
+             new DBOptions().setCreateIfMissing(true), dbFolder.getAbsolutePath(),
              columnFamilyDescriptors, columnFamilyHandles)) {
       try (final Transaction transaction = otdb.beginTransaction(new WriteOptions())) {
         for (int i = 0; i < params.numColumns; i++) {
@@ -126,7 +124,7 @@ public class MultiColumnRegressionTest {
 
     final List<ColumnFamilyHandle> columnFamilyHandles2 = new ArrayList<>();
     try (final OptimisticTransactionDB otdb = OptimisticTransactionDB.open(
-             new DBOptions().setCreateIfMissing(true), dbFolder.getRoot().getAbsolutePath(),
+             new DBOptions().setCreateIfMissing(true), dbFolder.getAbsolutePath(),
              columnFamilyDescriptors, columnFamilyHandles2)) {
       try (final Transaction transaction = otdb.beginTransaction(new WriteOptions())) {
         final ReadOptions readOptions = new ReadOptions();

@@ -6,15 +6,15 @@
 package org.rocksdb;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.fail;
 
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 import org.rocksdb.Status.Code;
 import org.rocksdb.Status.SubCode;
 
 public class RocksDBExceptionTest {
-  @BeforeClass
+  @BeforeAll
   public static void beforeAll() {
     RocksDB.loadLibrary();
   }

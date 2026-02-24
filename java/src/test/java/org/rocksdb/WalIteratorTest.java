@@ -1,20 +1,21 @@
 // Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved.
 package org.rocksdb;
 
-import org.junit.ClassRule;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
+import java.io.File;
+
+import org.junit.jupiter.api.extension.RegisterExtension;
+import org.junit.jupiter.api.io.TempDir;
+import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class WalIteratorTest {
-  @ClassRule
+  @RegisterExtension
   public static final RocksNativeLibraryResource ROCKS_NATIVE_LIBRARY_RESOURCE =
       new RocksNativeLibraryResource();
 
-  @Rule
-  public TemporaryFolder dbFolder = new TemporaryFolder();
+  @TempDir
+  public File dbFolder;
 
   @Test
   public void walIterator() throws RocksDBException {
@@ -33,7 +34,7 @@ public class WalIteratorTest {
         .setWalTtlSeconds(1000)
         .setWalSizeLimitMB(10);
          final RocksDB db = RocksDB.open(options,
-             dbFolder.getRoot().getAbsolutePath())) {
+             dbFolder.getAbsolutePath())) {
 
       for (int i = 0; i < numberOfPuts; i++) {
         db.put(String.valueOf(i).getBytes(),
@@ -78,7 +79,7 @@ public class WalIteratorTest {
         .setWalTtlSeconds(1000)
         .setWalSizeLimitMB(10);
          final RocksDB db = RocksDB.open(options,
-             dbFolder.getRoot().getAbsolutePath())) {
+             dbFolder.getAbsolutePath())) {
 
       db.put("key1".getBytes(), "value1".getBytes());
       // Get updates since the beginning
@@ -107,7 +108,7 @@ public class WalIteratorTest {
         .setWalSizeLimitMB(10)) {
 
       try (final RocksDB db = RocksDB.open(options,
-          dbFolder.getRoot().getAbsolutePath())) {
+          dbFolder.getAbsolutePath())) {
         db.put("key1".getBytes(), "value1".getBytes());
         db.put("key2".getBytes(), "value2".getBytes());
         db.flush(new FlushOptions().setWaitForFlush(true));
@@ -116,7 +117,7 @@ public class WalIteratorTest {
 
       // reopen
       try (final RocksDB db = RocksDB.open(options,
-          dbFolder.getRoot().getAbsolutePath())) {
+          dbFolder.getAbsolutePath())) {
         assertThat(db.getLatestSequenceNumber()).isEqualTo(numberOfKeys);
 
         try (final WalIterator walIterator = db.getUpdatesSince(0)) {

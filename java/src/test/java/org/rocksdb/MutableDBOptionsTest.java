@@ -4,23 +4,25 @@
 //  (found in the LICENSE.Apache file in the root directory).
 package org.rocksdb;
 
+import java.io.File;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.NoSuchElementException;
-import org.junit.ClassRule;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
+import org.junit.jupiter.api.extension.RegisterExtension;
+import org.junit.jupiter.api.io.TempDir;
+import org.junit.jupiter.api.Test;
 import org.rocksdb.MutableDBOptions.MutableDBOptionsBuilder;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 public class MutableDBOptionsTest {
-  @ClassRule
+  @RegisterExtension
   public static final RocksNativeLibraryResource ROCKS_NATIVE_LIBRARY_RESOURCE =
       new RocksNativeLibraryResource();
 
-  @Rule public TemporaryFolder dbFolder = new TemporaryFolder();
+  @TempDir public File dbFolder;
 
   @Test
   public void builder() {
@@ -36,12 +38,14 @@ public class MutableDBOptionsTest {
     assertThat(builder.avoidFlushDuringShutdown()).isEqualTo(false);
   }
 
-  @Test(expected = NoSuchElementException.class)
+  @Test
   public void builder_getWhenNotSet() {
-    final MutableDBOptionsBuilder builder =
-        MutableDBOptions.builder();
+    assertThrows(NoSuchElementException.class, () -> {
+        final MutableDBOptionsBuilder builder =
+            MutableDBOptions.builder();
 
-    builder.bytesPerSync();
+        builder.bytesPerSync();
+    });
   }
 
   @Test
@@ -98,7 +102,7 @@ public class MutableDBOptionsTest {
   public void listDBOptions() throws RocksDBException {
     try (final Options options =
              new Options().setCreateIfMissing(true).setDailyOffpeakTimeUTC("23:00-05:30");
-         final RocksDB db = RocksDB.open(options, dbFolder.getRoot().getAbsolutePath())) {
+         final RocksDB db = RocksDB.open(options, dbFolder.getAbsolutePath())) {
       // Test listColumnFamilies
       MutableDBOptionsBuilder builder = db.getDBOptions();
       assertThat(builder.maxOpenFiles()).isEqualTo(-1);
@@ -115,7 +119,7 @@ public class MutableDBOptionsTest {
     try (final DBOptions dbOptions =
              new DBOptions().setCreateIfMissing(true).setDailyOffpeakTimeUTC("23:00-05:30");
          final RocksDB db =
-             RocksDB.open(dbOptions, dbFolder.getRoot().getAbsolutePath(), cfd, cfh)) {
+             RocksDB.open(dbOptions, dbFolder.getAbsolutePath(), cfd, cfh)) {
       // Test listColumnFamilies
       MutableDBOptionsBuilder builder = db.getDBOptions();
       assertThat(builder.maxOpenFiles()).isEqualTo(-1);

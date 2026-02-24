@@ -4,20 +4,21 @@
 //  (found in the LICENSE.Apache file in the root directory).
 package org.rocksdb;
 
+import java.io.File;
+
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
+import org.junit.jupiter.api.io.TempDir;
+import org.junit.jupiter.api.Test;
 
 public class MutableOptionsGetSetTest {
   final int minBlobSize = 65536;
 
-  @Rule public TemporaryFolder dbFolder = new TemporaryFolder();
+  @TempDir public File dbFolder;
 
   /**
    * Validate the round-trip of  blob options into and out of the C++ core of RocksDB
@@ -38,7 +39,7 @@ public class MutableOptionsGetSetTest {
     final List<ColumnFamilyHandle> columnFamilyHandles = new ArrayList<>();
 
     try (final DBOptions dbOptions = new DBOptions().setCreateIfMissing(true);
-         final RocksDB db = RocksDB.open(dbOptions, dbFolder.getRoot().getAbsolutePath(),
+         final RocksDB db = RocksDB.open(dbOptions, dbFolder.getAbsolutePath(),
              columnFamilyDescriptors, columnFamilyHandles)) {
       try (final ColumnFamilyOptions columnFamilyOptions1 =
                new ColumnFamilyOptions()
@@ -178,7 +179,7 @@ public class MutableOptionsGetSetTest {
     final List<ColumnFamilyHandle> columnFamilyHandles = new ArrayList<>();
 
     try (final DBOptions dbOptions = new DBOptions().setCreateIfMissing(true);
-         final RocksDB db = RocksDB.open(dbOptions, dbFolder.getRoot().getAbsolutePath(),
+         final RocksDB db = RocksDB.open(dbOptions, dbFolder.getAbsolutePath(),
              columnFamilyDescriptors, columnFamilyHandles)) {
       try (final ColumnFamilyOptions columnFamilyOptions1 = new ColumnFamilyOptions();
 
@@ -319,7 +320,7 @@ public class MutableOptionsGetSetTest {
     final List<ColumnFamilyHandle> columnFamilyHandles = new ArrayList<>();
 
     try (final DBOptions dbOptions = new DBOptions().setCreateIfMissing(true);
-         final RocksDB db = RocksDB.open(dbOptions, dbFolder.getRoot().getAbsolutePath(),
+         final RocksDB db = RocksDB.open(dbOptions, dbFolder.getAbsolutePath(),
              columnFamilyDescriptors, columnFamilyHandles)) {
       final MutableColumnFamilyOptions
           .MutableColumnFamilyOptionsBuilder mutableColumnFamilyOptions =
@@ -387,7 +388,7 @@ public class MutableOptionsGetSetTest {
     final List<ColumnFamilyHandle> columnFamilyHandles = new ArrayList<>();
 
     try (final DBOptions dbOptions = new DBOptions().setCreateIfMissing(true);
-         final RocksDB db = RocksDB.open(dbOptions, dbFolder.getRoot().getAbsolutePath(),
+         final RocksDB db = RocksDB.open(dbOptions, dbFolder.getAbsolutePath(),
              columnFamilyDescriptors, columnFamilyHandles)) {
       final MutableDBOptions.MutableDBOptionsBuilder mutableDBOptions =
           MutableDBOptions.builder()

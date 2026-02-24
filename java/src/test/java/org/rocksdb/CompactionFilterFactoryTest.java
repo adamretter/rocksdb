@@ -5,9 +5,10 @@
 
 package org.rocksdb;
 
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
+import java.io.File;
+
+import org.junit.jupiter.api.io.TempDir;
+import org.junit.jupiter.api.Test;
 import org.rocksdb.test.RemoveEmptyValueCompactionFilterFactory;
 
 import java.util.ArrayList;
@@ -16,10 +17,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class CompactionFilterFactoryTest {
-
-  @Rule
-  public TemporaryFolder dbFolder = new TemporaryFolder();
+public class CompactionFilterFactoryTest {  @TempDir
+  public File dbFolder;
 
   @Test
   public void columnFamilyOptions_setCompactionFilterFactory()
@@ -40,7 +39,7 @@ public class CompactionFilterFactoryTest {
       final List<ColumnFamilyHandle> cfHandles = new ArrayList<>();
 
       try (final RocksDB rocksDb =
-               RocksDB.open(options, dbFolder.getRoot().getAbsolutePath(), cfNames, cfHandles)) {
+               RocksDB.open(options, dbFolder.getAbsolutePath(), cfNames, cfHandles)) {
         final byte[] key1 = "key1".getBytes();
         final byte[] key2 = "key2".getBytes();
 

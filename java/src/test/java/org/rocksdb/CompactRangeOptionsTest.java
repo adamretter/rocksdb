@@ -5,7 +5,7 @@
 
 package org.rocksdb;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.rocksdb.CompactRangeOptions.BottommostLevelCompaction;
 
 import static org.assertj.core.api.Assertions.assertThat;

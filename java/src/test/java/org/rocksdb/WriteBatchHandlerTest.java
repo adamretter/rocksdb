@@ -8,8 +8,8 @@ package org.rocksdb;
 import java.util.Arrays;
 import java.util.List;
 
-import org.junit.ClassRule;
-import org.junit.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
+import org.junit.jupiter.api.Test;
 import org.rocksdb.util.CapturingWriteBatchHandler;
 import org.rocksdb.util.CapturingWriteBatchHandler.Event;
 
@@ -18,7 +18,7 @@ import static org.rocksdb.util.CapturingWriteBatchHandler.Action.*;
 
 
 public class WriteBatchHandlerTest {
-  @ClassRule
+  @RegisterExtension
   public static final RocksNativeLibraryResource ROCKS_NATIVE_LIBRARY_RESOURCE =
       new RocksNativeLibraryResource();
 

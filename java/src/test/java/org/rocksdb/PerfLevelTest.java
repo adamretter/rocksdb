@@ -5,6 +5,8 @@
 
 package org.rocksdb;
 
+import java.io.File;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.rocksdb.PerfLevel.*;
@@ -12,22 +14,25 @@ import static org.rocksdb.PerfLevel.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import org.junit.*;
-import org.junit.rules.ExpectedException;
-import org.junit.rules.TemporaryFolder;
+
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
+import org.junit.jupiter.api.io.TempDir;
 
 public class PerfLevelTest {
-  @ClassRule
+  @RegisterExtension
   public static final RocksNativeLibraryResource ROCKS_NATIVE_LIBRARY_RESOURCE =
       new RocksNativeLibraryResource();
 
-  @Rule public TemporaryFolder dbFolder = new TemporaryFolder();
+  @TempDir public File dbFolder;
 
   List<ColumnFamilyDescriptor> cfDescriptors;
   List<ColumnFamilyHandle> columnFamilyHandleList = new ArrayList<>();
   RocksDB db;
 
-  @Before
+  @BeforeEach
   public void before() throws RocksDBException {
     cfDescriptors = Arrays.asList(new ColumnFamilyDescriptor(RocksDB.DEFAULT_COLUMN_FAMILY),
         new ColumnFamilyDescriptor("new_cf".getBytes()));
@@ -35,16 +40,17 @@ public class PerfLevelTest {
         new DBOptions().setCreateIfMissing(true).setCreateMissingColumnFamilies(true);
 
     db = RocksDB.open(
-        options, dbFolder.getRoot().getAbsolutePath(), cfDescriptors, columnFamilyHandleList);
+        options, dbFolder.getAbsolutePath(), cfDescriptors, columnFamilyHandleList);
   }
 
-  @After
+  @AfterEach
   public void after() {
     for (final ColumnFamilyHandle columnFamilyHandle : columnFamilyHandleList) {
       columnFamilyHandle.close();
     }
     db.close();
   }
+
   @Test
   public void testForInvalidValues() {
     assertThatThrownBy(() -> db.setPerfLevel(UNINITIALIZED))

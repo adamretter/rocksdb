@@ -1,24 +1,25 @@
 // Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved.
 package org.rocksdb;
 
+import java.io.File;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
-import org.junit.ClassRule;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
+import org.junit.jupiter.api.extension.RegisterExtension;
+import org.junit.jupiter.api.io.TempDir;
+import org.junit.jupiter.api.Test;
 
 public class LoggerTest {
-  @ClassRule
+  @RegisterExtension
   public static final RocksNativeLibraryResource ROCKS_NATIVE_LIBRARY_RESOURCE =
       new RocksNativeLibraryResource();
 
-  @Rule
-  public TemporaryFolder dbFolder = new TemporaryFolder();
+  @TempDir
+  public File dbFolder;
 
   @Test
   public void customLogger() throws RocksDBException {
@@ -40,7 +41,7 @@ public class LoggerTest {
       options.setLogger(logger);
 
       try (final RocksDB db = RocksDB.open(options,
-          dbFolder.getRoot().getAbsolutePath())) {
+          dbFolder.getAbsolutePath())) {
         // there should be more than zero received log messages in
         // debug level.
         assertThat(logMessageCounter.get()).isGreaterThan(0);
@@ -70,7 +71,7 @@ public class LoggerTest {
       options.setLogger(logger);
 
       try (final RocksDB db = RocksDB.open(options,
-          dbFolder.getRoot().getAbsolutePath())) {
+          dbFolder.getAbsolutePath())) {
         // there should be zero messages
         // using warn level as log level.
         assertThat(logMessageCounter.get()).isEqualTo(0);
@@ -101,7 +102,7 @@ public class LoggerTest {
       options.setLogger(logger);
 
       try (final RocksDB db = RocksDB.open(options,
-          dbFolder.getRoot().getAbsolutePath())) {
+          dbFolder.getAbsolutePath())) {
         // there should be zero messages
         // using fatal level as log level.
         assertThat(logMessageCounter.get()).isEqualTo(0);
@@ -133,7 +134,7 @@ public class LoggerTest {
       final List<ColumnFamilyHandle> cfHandles = new ArrayList<>();
 
       try (final RocksDB db = RocksDB.open(options,
-          dbFolder.getRoot().getAbsolutePath(),
+          dbFolder.getAbsolutePath(),
           cfDescriptors, cfHandles)) {
         try {
           // there should be zero messages
@@ -215,7 +216,7 @@ public class LoggerTest {
       options.setLogger(logger);
 
       try (final RocksDB db = RocksDB.open(options,
-          dbFolder.getRoot().getAbsolutePath())) {
+          dbFolder.getAbsolutePath())) {
 
         // there should be zero messages
         // using fatal level as log level.
@@ -254,7 +255,7 @@ public class LoggerTest {
       final List<ColumnFamilyHandle> cfHandles = new ArrayList<>();
 
       try (final RocksDB db = RocksDB.open(
-               options, dbFolder.getRoot().getAbsolutePath(), cfDescriptors, cfHandles)) {
+               options, dbFolder.getAbsolutePath(), cfDescriptors, cfHandles)) {
         try {
           // there should be zero messages
           // using fatal level as log level.

@@ -4,25 +4,26 @@
 //  (found in the LICENSE.Apache file in the root directory).
 package org.rocksdb;
 
+import java.io.File;
+
 import static org.assertj.core.api.Assertions.*;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import org.junit.ClassRule;
-import org.junit.Ignore;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
+import org.junit.jupiter.api.extension.RegisterExtension;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.io.TempDir;
+import org.junit.jupiter.api.Test;
 import org.rocksdb.util.TestUtil;
 
 public class MultiGetTest {
-  @ClassRule
+  @RegisterExtension
   public static final RocksNativeLibraryResource ROCKS_NATIVE_LIBRARY_RESOURCE =
       new RocksNativeLibraryResource();
 
-  @Rule public TemporaryFolder dbFolder = new TemporaryFolder();
+  @TempDir public File dbFolder;
 
   @FunctionalInterface
   public interface RocksDBBiFunction<T1, T2, R> {
@@ -32,7 +33,7 @@ public class MultiGetTest {
   private void putNThenMultiGetHelper(
       RocksDBBiFunction<RocksDB, List<byte[]>, List<byte[]>> multiGetter) throws RocksDBException {
     try (final Options opt = new Options().setCreateIfMissing(true);
-         final RocksDB db = RocksDB.open(opt, dbFolder.getRoot().getAbsolutePath())) {
+         final RocksDB db = RocksDB.open(opt, dbFolder.getAbsolutePath())) {
       db.put("key1".getBytes(), "value1ForKey1".getBytes());
       db.put("key2".getBytes(), "value2ForKey2".getBytes());
       db.put("key3".getBytes(), "value3ForKey3".getBytes());
@@ -49,7 +50,7 @@ public class MultiGetTest {
   private void putNThenMultiGetHelperWithMissing(
       RocksDBBiFunction<RocksDB, List<byte[]>, List<byte[]>> multiGetter) throws RocksDBException {
     try (final Options opt = new Options().setCreateIfMissing(true);
-         final RocksDB db = RocksDB.open(opt, dbFolder.getRoot().getAbsolutePath())) {
+         final RocksDB db = RocksDB.open(opt, dbFolder.getAbsolutePath())) {
       db.put("key1".getBytes(), "value1ForKey1".getBytes());
       db.put("key3".getBytes(), "value3ForKey3".getBytes());
       final List<byte[]> keys =
@@ -85,7 +86,7 @@ public class MultiGetTest {
   @Test
   public void putNThenMultiGetDirect() throws RocksDBException {
     try (final Options opt = new Options().setCreateIfMissing(true);
-         final RocksDB db = RocksDB.open(opt, dbFolder.getRoot().getAbsolutePath())) {
+         final RocksDB db = RocksDB.open(opt, dbFolder.getAbsolutePath())) {
       db.put("key1".getBytes(), "value1ForKey1".getBytes());
       db.put("key2".getBytes(), "value2ForKey2".getBytes());
       db.put("key3".getBytes(), "value3ForKey3".getBytes());
@@ -147,7 +148,7 @@ public class MultiGetTest {
   @Test
   public void putNThenMultiGetDirectWithMissing() throws RocksDBException {
     try (final Options opt = new Options().setCreateIfMissing(true);
-         final RocksDB db = RocksDB.open(opt, dbFolder.getRoot().getAbsolutePath())) {
+         final RocksDB db = RocksDB.open(opt, dbFolder.getAbsolutePath())) {
       db.put("key1".getBytes(), "value1ForKey1".getBytes());
       db.put("key3".getBytes(), "value3ForKey3".getBytes());
 
@@ -206,7 +207,7 @@ public class MultiGetTest {
   @Test
   public void putNThenMultiGetDirectSliced() throws RocksDBException {
     try (final Options opt = new Options().setCreateIfMissing(true);
-         final RocksDB db = RocksDB.open(opt, dbFolder.getRoot().getAbsolutePath())) {
+         final RocksDB db = RocksDB.open(opt, dbFolder.getAbsolutePath())) {
       db.put("key1".getBytes(), "value1ForKey1".getBytes());
       db.put("key2".getBytes(), "value2ForKey2".getBytes());
       db.put("key3".getBytes(), "value3ForKey3".getBytes());
@@ -249,7 +250,7 @@ public class MultiGetTest {
   @Test
   public void putNThenMultiGetDirectSlicedWithMissing() throws RocksDBException {
     try (final Options opt = new Options().setCreateIfMissing(true);
-         final RocksDB db = RocksDB.open(opt, dbFolder.getRoot().getAbsolutePath())) {
+         final RocksDB db = RocksDB.open(opt, dbFolder.getAbsolutePath())) {
       db.put("key1".getBytes(), "value1ForKey1".getBytes());
       db.put("key3".getBytes(), "value3ForKey3".getBytes());
 
@@ -290,7 +291,7 @@ public class MultiGetTest {
   @Test
   public void putNThenMultiGetDirectBadValuesArray() throws RocksDBException {
     try (final Options opt = new Options().setCreateIfMissing(true);
-         final RocksDB db = RocksDB.open(opt, dbFolder.getRoot().getAbsolutePath())) {
+         final RocksDB db = RocksDB.open(opt, dbFolder.getAbsolutePath())) {
       db.put("key1".getBytes(), "value1ForKey1".getBytes());
       db.put("key2".getBytes(), "value2ForKey2".getBytes());
       db.put("key3".getBytes(), "value3ForKey3".getBytes());
@@ -341,7 +342,7 @@ public class MultiGetTest {
   @Test
   public void putNThenMultiGetDirectShortValueBuffers() throws RocksDBException {
     try (final Options opt = new Options().setCreateIfMissing(true);
-         final RocksDB db = RocksDB.open(opt, dbFolder.getRoot().getAbsolutePath())) {
+         final RocksDB db = RocksDB.open(opt, dbFolder.getAbsolutePath())) {
       db.put("key1".getBytes(), "value1ForKey1".getBytes());
       db.put("key2".getBytes(), "value2ForKey2".getBytes());
       db.put("key3".getBytes(), "value3ForKey3".getBytes());
@@ -378,7 +379,7 @@ public class MultiGetTest {
   @Test
   public void putNThenMultiGetDirectNondefaultCF() throws RocksDBException {
     try (final Options opt = new Options().setCreateIfMissing(true);
-         final RocksDB db = RocksDB.open(opt, dbFolder.getRoot().getAbsolutePath())) {
+         final RocksDB db = RocksDB.open(opt, dbFolder.getAbsolutePath())) {
       final List<ColumnFamilyDescriptor> cfDescriptors = new ArrayList<>(0);
       cfDescriptors.add(new ColumnFamilyDescriptor("cf0".getBytes()));
       cfDescriptors.add(new ColumnFamilyDescriptor("cf1".getBytes()));
@@ -495,7 +496,7 @@ public class MultiGetTest {
   @Test
   public void putNThenMultiGetDirectCFParams() throws RocksDBException {
     try (final Options opt = new Options().setCreateIfMissing(true);
-         final RocksDB db = RocksDB.open(opt, dbFolder.getRoot().getAbsolutePath())) {
+         final RocksDB db = RocksDB.open(opt, dbFolder.getAbsolutePath())) {
       db.put("key1".getBytes(), "value1ForKey1".getBytes());
       db.put("key2".getBytes(), "value2ForKey2".getBytes());
       db.put("key3".getBytes(), "value3ForKey3".getBytes());
@@ -545,7 +546,7 @@ public class MultiGetTest {
   @Test
   public void putNThenMultiGetDirectMixedCF() throws RocksDBException {
     try (final Options opt = new Options().setCreateIfMissing(true);
-         final RocksDB db = RocksDB.open(opt, dbFolder.getRoot().getAbsolutePath())) {
+         final RocksDB db = RocksDB.open(opt, dbFolder.getAbsolutePath())) {
       final List<ColumnFamilyDescriptor> cfDescriptors = new ArrayList<>();
       cfDescriptors.add(new ColumnFamilyDescriptor("cf0".getBytes()));
       cfDescriptors.add(new ColumnFamilyDescriptor("cf1".getBytes()));
@@ -654,7 +655,7 @@ public class MultiGetTest {
   @Test
   public void putNThenMultiGetDirectTruncateCF() throws RocksDBException {
     try (final Options opt = new Options().setCreateIfMissing(true);
-         final RocksDB db = RocksDB.open(opt, dbFolder.getRoot().getAbsolutePath())) {
+         final RocksDB db = RocksDB.open(opt, dbFolder.getAbsolutePath())) {
       final List<ColumnFamilyDescriptor> cfDescriptors = new ArrayList<>();
       cfDescriptors.add(new ColumnFamilyDescriptor("cf0".getBytes()));
 
@@ -751,12 +752,12 @@ public class MultiGetTest {
    * Too slow/disk space dependent for CI
    * @throws RocksDBException
    */
-  @Ignore
+  @Disabled
   @Test
   public void putBigMultiGetDirect() throws RocksDBException {
     try (final Options opt =
              new Options().setCreateIfMissing(true).setMergeOperatorName("stringappend");
-         final RocksDB db = RocksDB.open(opt, dbFolder.getRoot().getAbsolutePath())) {
+         final RocksDB db = RocksDB.open(opt, dbFolder.getAbsolutePath())) {
       final long length = createIntOverflowValue(db, db.getDefaultColumnFamily(), "key1");
       db.put("key2".getBytes(), "value2ForKey2".getBytes());
 
@@ -780,13 +781,13 @@ public class MultiGetTest {
    * Too slow/disk space dependent for CI
    * @throws RocksDBException
    */
-  @Ignore
+  @Disabled
   @Test
   public void putBigMultiGetDirectCF() throws RocksDBException {
     try (final Options opt = new Options().setCreateIfMissing(true);
          final ColumnFamilyOptions cfOptions =
              new ColumnFamilyOptions().setMergeOperatorName("stringappend");
-         final RocksDB db = RocksDB.open(opt, dbFolder.getRoot().getAbsolutePath())) {
+         final RocksDB db = RocksDB.open(opt, dbFolder.getAbsolutePath())) {
       final List<ColumnFamilyDescriptor> cfDescriptors = new ArrayList<>(0);
       cfDescriptors.add(new ColumnFamilyDescriptor("cf0".getBytes(), cfOptions));
       final List<ColumnFamilyHandle> cf = db.createColumnFamilies(cfDescriptors);
@@ -817,12 +818,12 @@ public class MultiGetTest {
    * Too slow/disk space dependent for CI
    * @throws RocksDBException
    */
-  @Ignore
+  @Disabled
   @Test
   public void putBigMultiGetDirect2Keys() throws RocksDBException {
     try (final Options opt =
              new Options().setCreateIfMissing(true).setMergeOperatorName("stringappend");
-         final RocksDB db = RocksDB.open(opt, dbFolder.getRoot().getAbsolutePath())) {
+         final RocksDB db = RocksDB.open(opt, dbFolder.getAbsolutePath())) {
       final long length = createIntOverflowValue(db, db.getDefaultColumnFamily(), "key1");
       db.put("key2".getBytes(), "value2ForKey2".getBytes());
 
@@ -852,13 +853,13 @@ public class MultiGetTest {
    * Too slow/disk space dependent for CI
    * @throws RocksDBException
    */
-  @Ignore
+  @Disabled
   @Test
   public void putBigMultiGetDirect2KeysCF() throws RocksDBException {
     try (final Options opt = new Options().setCreateIfMissing(true);
          final ColumnFamilyOptions cfOptions =
              new ColumnFamilyOptions().setMergeOperatorName("stringappend");
-         final RocksDB db = RocksDB.open(opt, dbFolder.getRoot().getAbsolutePath())) {
+         final RocksDB db = RocksDB.open(opt, dbFolder.getAbsolutePath())) {
       final List<ColumnFamilyDescriptor> cfDescriptors = new ArrayList<>(0);
       cfDescriptors.add(new ColumnFamilyDescriptor("cf0".getBytes(), cfOptions));
       final List<ColumnFamilyHandle> cf = db.createColumnFamilies(cfDescriptors);
@@ -895,12 +896,12 @@ public class MultiGetTest {
    * Too slow/disk space dependent for CI
    * @throws RocksDBException
    */
-  @Ignore
+  @Disabled
   @Test
   public void putBigMultiGetAsList() throws RocksDBException {
     try (final Options opt =
              new Options().setCreateIfMissing(true).setMergeOperatorName("stringappend");
-         final RocksDB db = RocksDB.open(opt, dbFolder.getRoot().getAbsolutePath())) {
+         final RocksDB db = RocksDB.open(opt, dbFolder.getAbsolutePath())) {
       final long length = createIntOverflowValue(db, db.getDefaultColumnFamily(), "key1");
       db.put("key2".getBytes(), "value2ForKey2".getBytes());
 
@@ -916,13 +917,13 @@ public class MultiGetTest {
    * Too slow/disk space dependent for CI
    * @throws RocksDBException
    */
-  @Ignore
+  @Disabled
   @Test
   public void putBigMultiGetAsListCF() throws RocksDBException {
     try (final Options opt = new Options().setCreateIfMissing(true);
          final ColumnFamilyOptions cfOptions =
              new ColumnFamilyOptions().setMergeOperatorName("stringappend");
-         final RocksDB db = RocksDB.open(opt, dbFolder.getRoot().getAbsolutePath())) {
+         final RocksDB db = RocksDB.open(opt, dbFolder.getAbsolutePath())) {
       final List<ColumnFamilyDescriptor> cfDescriptors = new ArrayList<>(0);
       cfDescriptors.add(new ColumnFamilyDescriptor("cf0".getBytes(), cfOptions));
       final List<ColumnFamilyHandle> cf = db.createColumnFamilies(cfDescriptors);
@@ -942,12 +943,12 @@ public class MultiGetTest {
    * Too slow/disk space dependent for CI
    * @throws RocksDBException
    */
-  @Ignore
+  @Disabled
   @Test
   public void putBigMultiGetAsList2Keys() throws RocksDBException {
     try (final Options opt =
              new Options().setCreateIfMissing(true).setMergeOperatorName("stringappend");
-         final RocksDB db = RocksDB.open(opt, dbFolder.getRoot().getAbsolutePath())) {
+         final RocksDB db = RocksDB.open(opt, dbFolder.getAbsolutePath())) {
       final long length = createIntOverflowValue(db, db.getDefaultColumnFamily(), "key1");
       db.put("key2".getBytes(), "value2ForKey2".getBytes());
 
@@ -964,13 +965,13 @@ public class MultiGetTest {
    * Too slow/disk space dependent for CI
    * @throws RocksDBException
    */
-  @Ignore
+  @Disabled
   @Test
   public void putBigMultiGetAsList2KeysCF() throws RocksDBException {
     try (final Options opt = new Options().setCreateIfMissing(true);
          final ColumnFamilyOptions cfOptions =
              new ColumnFamilyOptions().setMergeOperatorName("stringappend");
-         final RocksDB db = RocksDB.open(opt, dbFolder.getRoot().getAbsolutePath())) {
+         final RocksDB db = RocksDB.open(opt, dbFolder.getAbsolutePath())) {
       final List<ColumnFamilyDescriptor> cfDescriptors = new ArrayList<>(0);
       cfDescriptors.add(new ColumnFamilyDescriptor("cf0".getBytes(), cfOptions));
       final List<ColumnFamilyHandle> cf = db.createColumnFamilies(cfDescriptors);
@@ -1000,11 +1001,11 @@ public class MultiGetTest {
    * @throws RocksDBException
    */
   @Test
-  @Ignore
+  @Disabled
   public void putBigMultiGetAsListRepeat() throws RocksDBException {
     try (final Options opt =
              new Options().setCreateIfMissing(true).setMergeOperatorName("stringappend");
-         final RocksDB db = RocksDB.open(opt, dbFolder.getRoot().getAbsolutePath())) {
+         final RocksDB db = RocksDB.open(opt, dbFolder.getAbsolutePath())) {
       final long length = createIntOverflowValue(db, db.getDefaultColumnFamily(), "key1");
       db.put("key2".getBytes(), "value2ForKey2".getBytes());
 

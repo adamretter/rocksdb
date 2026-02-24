@@ -5,21 +5,22 @@
 
 package org.rocksdb;
 
-import org.junit.ClassRule;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
+import org.junit.jupiter.api.io.TempDir;
+
+import java.io.File;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class BuiltinComparatorTest {
 
-  @ClassRule
+  @RegisterExtension
   public static final RocksNativeLibraryResource ROCKS_NATIVE_LIBRARY_RESOURCE =
       new RocksNativeLibraryResource();
 
-  @Rule
-  public TemporaryFolder dbFolder = new TemporaryFolder();
+  @TempDir
+  public File dbFolder;
 
   @Test
   public void builtinForwardComparator()
@@ -28,7 +29,7 @@ public class BuiltinComparatorTest {
         .setCreateIfMissing(true)
         .setComparator(BuiltinComparator.BYTEWISE_COMPARATOR);
          final RocksDB rocksDb = RocksDB.open(options,
-             dbFolder.getRoot().getAbsolutePath())
+             dbFolder.getAbsolutePath())
     ) {
       rocksDb.put("abc1".getBytes(), "abc1".getBytes());
       rocksDb.put("abc2".getBytes(), "abc2".getBytes());
@@ -81,7 +82,7 @@ public class BuiltinComparatorTest {
         .setCreateIfMissing(true)
         .setComparator(BuiltinComparator.REVERSE_BYTEWISE_COMPARATOR);
          final RocksDB rocksDb = RocksDB.open(options,
-             dbFolder.getRoot().getAbsolutePath())
+             dbFolder.getAbsolutePath())
     ) {
 
       rocksDb.put("abc1".getBytes(), "abc1".getBytes());

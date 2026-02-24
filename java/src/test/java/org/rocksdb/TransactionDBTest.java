@@ -5,26 +5,26 @@
 
 package org.rocksdb;
 
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
+import java.io.File;
+
+import org.junit.jupiter.api.io.TempDir;
+import org.junit.jupiter.api.Test;
 
 import java.util.*;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static java.nio.charset.StandardCharsets.UTF_8;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
-public class TransactionDBTest {
-
-  @Rule
-  public TemporaryFolder dbFolder = new TemporaryFolder();
+public class TransactionDBTest {  @TempDir
+  public File dbFolder;
 
   @Test
   public void open() throws RocksDBException {
     try (final Options options = new Options().setCreateIfMissing(true);
          final TransactionDBOptions txnDbOptions = new TransactionDBOptions();
          final TransactionDB tdb = TransactionDB.open(options, txnDbOptions,
-                 dbFolder.getRoot().getAbsolutePath())) {
+                 dbFolder.getAbsolutePath())) {
       assertThat(tdb).isNotNull();
     }
   }
@@ -43,7 +43,7 @@ public class TransactionDBTest {
 
       try (final TransactionDBOptions txnDbOptions = new TransactionDBOptions();
            final TransactionDB tdb = TransactionDB.open(dbOptions, txnDbOptions,
-               dbFolder.getRoot().getAbsolutePath(),
+               dbFolder.getAbsolutePath(),
                columnFamilyDescriptors, columnFamilyHandles)) {
         try {
           assertThat(tdb).isNotNull();
@@ -56,22 +56,24 @@ public class TransactionDBTest {
     }
   }
 
-  @Test(expected = IllegalArgumentException.class)
+  @Test
   public void open_columnFamilies_no_default() throws RocksDBException {
-    try (final DBOptions dbOptions =
-             new DBOptions().setCreateIfMissing(true).setCreateMissingColumnFamilies(true);
-         final ColumnFamilyOptions myCfOpts = new ColumnFamilyOptions()) {
-      final List<ColumnFamilyDescriptor> columnFamilyDescriptors =
-          Collections.singletonList(new ColumnFamilyDescriptor("myCf".getBytes(), myCfOpts));
+    assertThrows(IllegalArgumentException.class, () -> {
+        try (final DBOptions dbOptions =
+                 new DBOptions().setCreateIfMissing(true).setCreateMissingColumnFamilies(true);
+             final ColumnFamilyOptions myCfOpts = new ColumnFamilyOptions()) {
+          final List<ColumnFamilyDescriptor> columnFamilyDescriptors =
+              Collections.singletonList(new ColumnFamilyDescriptor("myCf".getBytes(), myCfOpts));
 
-      final List<ColumnFamilyHandle> columnFamilyHandles = new ArrayList<>();
+          final List<ColumnFamilyHandle> columnFamilyHandles = new ArrayList<>();
 
-      try (
-          final TransactionDBOptions txnDbOptions = new TransactionDBOptions();
-          final TransactionDB ignored = TransactionDB.open(dbOptions, txnDbOptions,
-              dbFolder.getRoot().getAbsolutePath(), columnFamilyDescriptors, columnFamilyHandles)) {
-      }
-    }
+          try (
+              final TransactionDBOptions txnDbOptions = new TransactionDBOptions();
+              final TransactionDB ignored = TransactionDB.open(dbOptions, txnDbOptions,
+                  dbFolder.getAbsolutePath(), columnFamilyDescriptors, columnFamilyHandles)) {
+          }
+        }
+    });
   }
 
   @Test
@@ -79,7 +81,7 @@ public class TransactionDBTest {
     try (final Options options = new Options().setCreateIfMissing(true);
          final TransactionDBOptions txnDbOptions = new TransactionDBOptions();
          final TransactionDB tdb = TransactionDB.open(options, txnDbOptions,
-             dbFolder.getRoot().getAbsolutePath());
+             dbFolder.getAbsolutePath());
         final WriteOptions writeOptions = new WriteOptions()) {
 
       try(final Transaction txn = tdb.beginTransaction(writeOptions)) {
@@ -93,7 +95,7 @@ public class TransactionDBTest {
     try (final Options options = new Options().setCreateIfMissing(true);
          final TransactionDBOptions txnDbOptions = new TransactionDBOptions();
          final TransactionDB tdb = TransactionDB.open(options, txnDbOptions,
-             dbFolder.getRoot().getAbsolutePath());
+             dbFolder.getAbsolutePath());
          final WriteOptions writeOptions = new WriteOptions();
          final TransactionOptions txnOptions = new TransactionOptions()) {
 
@@ -109,7 +111,7 @@ public class TransactionDBTest {
     try (final Options options = new Options().setCreateIfMissing(true);
          final TransactionDBOptions txnDbOptions = new TransactionDBOptions();
          final TransactionDB tdb = TransactionDB.open(options, txnDbOptions,
-             dbFolder.getRoot().getAbsolutePath());
+             dbFolder.getAbsolutePath());
          final WriteOptions writeOptions = new WriteOptions()) {
 
       try(final Transaction txn = tdb.beginTransaction(writeOptions)) {
@@ -125,7 +127,7 @@ public class TransactionDBTest {
     try (final Options options = new Options().setCreateIfMissing(true);
          final TransactionDBOptions txnDbOptions = new TransactionDBOptions();
          final TransactionDB tdb = TransactionDB.open(options, txnDbOptions,
-             dbFolder.getRoot().getAbsolutePath());
+             dbFolder.getAbsolutePath());
          final WriteOptions writeOptions = new WriteOptions();
          final TransactionOptions txnOptions = new TransactionOptions()) {
 
@@ -142,7 +144,7 @@ public class TransactionDBTest {
     try (final Options options = new Options().setCreateIfMissing(true);
          final TransactionDBOptions txnDbOptions = new TransactionDBOptions();
          final TransactionDB tdb = TransactionDB.open(options, txnDbOptions,
-             dbFolder.getRoot().getAbsolutePath());
+             dbFolder.getAbsolutePath());
          final WriteOptions writeOptions = new WriteOptions();
          final ReadOptions readOptions = new ReadOptions()) {
 
@@ -175,7 +177,7 @@ public class TransactionDBTest {
     try (final Options options = new Options().setCreateIfMissing(true);
          final TransactionDBOptions txnDbOptions = new TransactionDBOptions();
          final TransactionDB tdb = TransactionDB.open(options, txnDbOptions,
-             dbFolder.getRoot().getAbsolutePath())) {
+             dbFolder.getAbsolutePath())) {
 
       // TODO(AR) can we cause a deadlock so that we can test the output here?
       assertThat(tdb.getDeadlockInfoBuffer()).isEmpty();
@@ -187,7 +189,7 @@ public class TransactionDBTest {
     try (final Options options = new Options().setCreateIfMissing(true);
          final TransactionDBOptions txnDbOptions = new TransactionDBOptions();
          final TransactionDB tdb = TransactionDB.open(options, txnDbOptions,
-             dbFolder.getRoot().getAbsolutePath())) {
+             dbFolder.getAbsolutePath())) {
       tdb.setDeadlockInfoBufferSize(123);
     }
   }
@@ -197,7 +199,7 @@ public class TransactionDBTest {
     try (final Options options = new Options().setCreateIfMissing(true).setMaxCompactionBytes(0);
          final TransactionDBOptions txnDbOptions = new TransactionDBOptions();
          final TransactionDB tdb =
-             TransactionDB.open(options, txnDbOptions, dbFolder.getRoot().getAbsolutePath())) {
+             TransactionDB.open(options, txnDbOptions, dbFolder.getAbsolutePath())) {
       tdb.put("keyI".getBytes(), "valueI".getBytes());
       try (final RocksIterator iterator = tdb.newIterator()) {
         iterator.seekToFirst();

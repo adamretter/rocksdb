@@ -5,30 +5,33 @@
 
 package org.rocksdb;
 
+import java.nio.file.Files;
+
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import org.junit.ClassRule;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
+import org.junit.jupiter.api.extension.RegisterExtension;
+import org.junit.jupiter.api.io.TempDir;
+import org.junit.jupiter.api.Test;
 import org.rocksdb.util.BytewiseComparator;
 
 public class SstFileWriterTest {
-  private static final String SST_FILE_NAME = "test.sst";
+  private static final String SST_FILE_NAME_PREFIX = "test";
+  private static final String SST_FILE_NAME_POSTFIX = ".sst";
   private static final String DB_DIRECTORY_NAME = "test_db";
 
-  @ClassRule
+  @RegisterExtension
   public static final RocksNativeLibraryResource ROCKS_NATIVE_LIBRARY_RESOURCE
       = new RocksNativeLibraryResource();
 
-  @Rule public TemporaryFolder parentFolder = new TemporaryFolder();
+  @TempDir public File parentFolder;
 
   enum OpType { PUT, PUT_BYTES, PUT_DIRECT, MERGE, MERGE_BYTES, DELETE, DELETE_BYTES }
 
@@ -56,7 +59,7 @@ public class SstFileWriterTest {
     private final OpType opType;
   }
 
-  private File newSstFile(final List<KeyValueWithOp> keyValues,
+  private Path newSstFile(final List<KeyValueWithOp> keyValues,
       final boolean useJavaBytewiseComparator) throws IOException, RocksDBException {
     final EnvOptions envOptions = new EnvOptions();
     final StringAppendOperator stringAppendOperator = new StringAppendOperator();
@@ -73,9 +76,9 @@ public class SstFileWriterTest {
       sstFileWriter = new SstFileWriter(envOptions, options);
     }
 
-    final File sstFile = parentFolder.newFile(SST_FILE_NAME);
+    final Path sstFile = Files.createTempFile(parentFolder.toPath(), SST_FILE_NAME_PREFIX, SST_FILE_NAME_POSTFIX);
     try {
-      sstFileWriter.open(sstFile.getAbsolutePath());
+      sstFileWriter.open(sstFile.toAbsolutePath().toString());
       assertThat(sstFileWriter.fileSize()).isEqualTo(0);
       for (final KeyValueWithOp keyValue : keyValues) {
         final Slice keySlice = new Slice(keyValue.getKey());
@@ -175,18 +178,18 @@ public class SstFileWriterTest {
     keyValues.add(new KeyValueWithOp("key7", "", OpType.DELETE));
 
 
-    final File sstFile = newSstFile(keyValues, false);
-    final File dbFolder = parentFolder.newFolder(DB_DIRECTORY_NAME);
+    final Path sstFile = newSstFile(keyValues, false);
+    final Path dbFolder = Files.createTempDirectory(parentFolder.toPath(), DB_DIRECTORY_NAME);
     try(final StringAppendOperator stringAppendOperator =
             new StringAppendOperator();
         final Options options = new Options()
             .setCreateIfMissing(true)
             .setMergeOperator(stringAppendOperator);
-        final RocksDB db = RocksDB.open(options, dbFolder.getAbsolutePath());
+        final RocksDB db = RocksDB.open(options, dbFolder.toAbsolutePath().toString());
         final IngestExternalFileOptions ingestExternalFileOptions =
             new IngestExternalFileOptions()) {
       db.ingestExternalFile(
-          Collections.singletonList(sstFile.getAbsolutePath()), ingestExternalFileOptions);
+          Collections.singletonList(sstFile.toAbsolutePath().toString()), ingestExternalFileOptions);
 
       assertThat(db.get("key1".getBytes())).isEqualTo("value1".getBytes());
       assertThat(db.get("key2".getBytes())).isEqualTo("value2".getBytes());
@@ -206,15 +209,15 @@ public class SstFileWriterTest {
     keyValues.add(new KeyValueWithOp("key3", "value3", OpType.MERGE));
     keyValues.add(new KeyValueWithOp("key4", "", OpType.DELETE));
 
-    final File sstFile = newSstFile(keyValues, false);
-    final File dbFolder = parentFolder.newFolder(DB_DIRECTORY_NAME);
+    final Path sstFile = newSstFile(keyValues, false);
+    final Path dbFolder = Files.createTempDirectory(parentFolder.toPath(), DB_DIRECTORY_NAME);
     try(final StringAppendOperator stringAppendOperator =
             new StringAppendOperator();
         final Options options = new Options()
             .setCreateIfMissing(true)
             .setCreateMissingColumnFamilies(true)
             .setMergeOperator(stringAppendOperator);
-        final RocksDB db = RocksDB.open(options, dbFolder.getAbsolutePath());
+        final RocksDB db = RocksDB.open(options, dbFolder.toAbsolutePath().toString());
         final IngestExternalFileOptions ingestExternalFileOptions =
             new IngestExternalFileOptions()) {
 
@@ -222,7 +225,7 @@ public class SstFileWriterTest {
               .setMergeOperator(stringAppendOperator);
           final ColumnFamilyHandle cf_handle = db.createColumnFamily(
               new ColumnFamilyDescriptor("new_cf".getBytes(), cf_opts))) {
-        db.ingestExternalFile(cf_handle, Collections.singletonList(sstFile.getAbsolutePath()),
+        db.ingestExternalFile(cf_handle, Collections.singletonList(sstFile.toAbsolutePath().toString()),
             ingestExternalFileOptions);
 
         assertThat(db.get(cf_handle,

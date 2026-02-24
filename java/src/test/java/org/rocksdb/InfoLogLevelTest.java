@@ -1,10 +1,11 @@
 // Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved.
 package org.rocksdb;
 
-import org.junit.ClassRule;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
+import java.io.File;
+
+import org.junit.jupiter.api.extension.RegisterExtension;
+import org.junit.jupiter.api.io.TempDir;
+import org.junit.jupiter.api.Test;
 import org.rocksdb.util.Environment;
 
 import java.io.IOException;
@@ -12,21 +13,22 @@ import java.io.IOException;
 import static java.nio.file.Files.readAllBytes;
 import static java.nio.file.Paths.get;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 public class InfoLogLevelTest {
 
-  @ClassRule
+  @RegisterExtension
   public static final RocksNativeLibraryResource ROCKS_NATIVE_LIBRARY_RESOURCE =
       new RocksNativeLibraryResource();
 
-  @Rule
-  public TemporaryFolder dbFolder = new TemporaryFolder();
+  @TempDir
+  public File dbFolder;
 
   @Test
   public void testInfoLogLevel() throws RocksDBException,
       IOException {
     try (final RocksDB db =
-             RocksDB.open(dbFolder.getRoot().getAbsolutePath())) {
+             RocksDB.open(dbFolder.getAbsolutePath())) {
       db.put("key".getBytes(), "value".getBytes());
       db.flush(new FlushOptions().setWaitForFlush(true));
       assertThat(getLogContentsWithoutHeader()).isNotEmpty();
@@ -40,7 +42,7 @@ public class InfoLogLevelTest {
         setCreateIfMissing(true).
         setInfoLogLevel(InfoLogLevel.FATAL_LEVEL);
          final RocksDB db = RocksDB.open(options,
-             dbFolder.getRoot().getAbsolutePath())) {
+             dbFolder.getAbsolutePath())) {
       assertThat(options.infoLogLevel()).
           isEqualTo(InfoLogLevel.FATAL_LEVEL);
       db.put("key".getBytes(), "value".getBytes());
@@ -59,7 +61,7 @@ public class InfoLogLevelTest {
              new ColumnFamilyOptions()).
              setCreateIfMissing(true);
          final RocksDB db =
-             RocksDB.open(options, dbFolder.getRoot().getAbsolutePath())) {
+             RocksDB.open(options, dbFolder.getAbsolutePath())) {
       assertThat(dbOptions.infoLogLevel()).
           isEqualTo(InfoLogLevel.FATAL_LEVEL);
       assertThat(options.infoLogLevel()).
@@ -69,9 +71,11 @@ public class InfoLogLevelTest {
     }
   }
 
-  @Test(expected = IllegalArgumentException.class)
+  @Test
   public void failIfIllegalByteValueProvided() {
-    InfoLogLevel.getInfoLogLevel((byte) -1);
+    assertThrows(IllegalArgumentException.class, () -> {
+        InfoLogLevel.getInfoLogLevel((byte) -1);
+    });
   }
 
   @Test
@@ -90,7 +94,7 @@ public class InfoLogLevelTest {
     final String separator = Environment.isWindows() ?
         "\n" : System.getProperty("line.separator");
     final String[] lines = new String(readAllBytes(get(
-        dbFolder.getRoot().getAbsolutePath() + "/LOG"))).split(separator);
+        dbFolder.getAbsolutePath() + "/LOG"))).split(separator);
 
     int first_non_header = lines.length;
     // Identify the last line of the header

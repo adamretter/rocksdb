@@ -14,24 +14,23 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import org.junit.ClassRule;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
+import org.junit.jupiter.api.extension.RegisterExtension;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
+import java.util.stream.Stream;
+import org.junit.jupiter.api.io.TempDir;
+import java.io.File;
 
-@RunWith(Parameterized.class)
 public class MergeCFVariantsTest {
+
   @FunctionalInterface
   interface FunctionMerge<PDatabase, PColumnFamilyHandle, PLeft, PRight> {
     public void apply(PDatabase db, PColumnFamilyHandle one, PLeft two, PRight three)
         throws RocksDBException;
   }
 
-  @Parameterized.Parameters
-  public static List<FunctionMerge<RocksDB, ColumnFamilyHandle, byte[], byte[]>> data() {
-    return Arrays.asList(RocksDB::merge,
+  static Stream<FunctionMerge<RocksDB, ColumnFamilyHandle, byte[], byte[]>> parameters() {
+    return Stream.of(RocksDB::merge,
         (db, cfh, left, right)
             -> db.merge(cfh, new WriteOptions(), left, right),
         (db, cfh, left, right)
@@ -67,17 +66,16 @@ public class MergeCFVariantsTest {
         });
   }
 
-  @Parameterized.Parameter
-  public FunctionMerge<RocksDB, ColumnFamilyHandle, byte[], byte[]> mergeFunction;
-
-  @ClassRule
+  @RegisterExtension
   public static final RocksNativeLibraryResource ROCKS_NATIVE_LIBRARY_RESOURCE =
       new RocksNativeLibraryResource();
 
-  @Rule public TemporaryFolder dbFolder = new TemporaryFolder();
+  @TempDir
+  File dbFolder;
 
-  @Test
-  public void cFUInt64AddOperatorOption() throws InterruptedException, RocksDBException {
+  @ParameterizedTest
+  @MethodSource("parameters")
+  public void cFUInt64AddOperatorOption(final FunctionMerge<RocksDB, ColumnFamilyHandle, byte[], byte[]> mergeFunction) throws InterruptedException, RocksDBException {
     try (final UInt64AddOperator uint64AddOperator = new UInt64AddOperator();
          final ColumnFamilyOptions cfOpt1 =
              new ColumnFamilyOptions().setMergeOperator(uint64AddOperator);
@@ -90,7 +88,7 @@ public class MergeCFVariantsTest {
       try (final DBOptions opt =
                new DBOptions().setCreateIfMissing(true).setCreateMissingColumnFamilies(true);
            final RocksDB db = RocksDB.open(
-               opt, dbFolder.getRoot().getAbsolutePath(), cfDescriptors, columnFamilyHandleList)) {
+               opt, dbFolder.getAbsolutePath(), cfDescriptors, columnFamilyHandleList)) {
         try {
           // writing (long)100 under key
           db.put(columnFamilyHandleList.get(1), "cfkey".getBytes(), longToByteArray(100));

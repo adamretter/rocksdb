@@ -5,14 +5,15 @@
 
 package org.rocksdb;
 
-import org.junit.ClassRule;
-import org.junit.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
+import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 public class RocksMemEnvTest {
 
-  @ClassRule
+  @RegisterExtension
   public static final RocksNativeLibraryResource ROCKS_NATIVE_LIBRARY_RESOURCE =
       new RocksNativeLibraryResource();
 
@@ -125,13 +126,15 @@ public class RocksMemEnvTest {
     }
   }
 
-  @Test(expected = RocksDBException.class)
+  @Test
   public void createIfMissingFalse() throws RocksDBException {
-    try (final Env env = new RocksMemEnv(Env.getDefault());
-         final Options options = new Options().setCreateIfMissing(false).setEnv(env);
-         final RocksDB db = RocksDB.open(options, "/db/dir")) {
-      // shall throw an exception because db dir does not
-      // exist.
-    }
+    assertThrows(RocksDBException.class, () -> {
+        try (final Env env = new RocksMemEnv(Env.getDefault());
+             final Options options = new Options().setCreateIfMissing(false).setEnv(env);
+             final RocksDB db = RocksDB.open(options, "/db/dir")) {
+          // shall throw an exception because db dir does not
+          // exist.
+        }
+    });
   }
 }

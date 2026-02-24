@@ -5,28 +5,29 @@
 
 package org.rocksdb;
 
+import java.io.File;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.ArrayList;
 import java.util.List;
-import org.junit.ClassRule;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
+import org.junit.jupiter.api.extension.RegisterExtension;
+import org.junit.jupiter.api.io.TempDir;
+import org.junit.jupiter.api.Test;
 
 public class SecondaryDBTest {
-  @ClassRule
+  @RegisterExtension
   public static final RocksNativeLibraryResource ROCKS_NATIVE_LIBRARY_RESOURCE =
       new RocksNativeLibraryResource();
 
-  @Rule public TemporaryFolder dbFolder = new TemporaryFolder();
+  @TempDir public File dbFolder;
 
-  @Rule public TemporaryFolder secondaryDbFolder = new TemporaryFolder();
+  @TempDir public File secondaryDbFolder;
 
   @Test
   public void openAsSecondary() throws RocksDBException {
     try (final Options options = new Options().setCreateIfMissing(true);
-         final RocksDB db = RocksDB.open(options, dbFolder.getRoot().getAbsolutePath())) {
+         final RocksDB db = RocksDB.open(options, dbFolder.getAbsolutePath())) {
       db.put("key1".getBytes(), "value1".getBytes());
       db.put("key2".getBytes(), "value2".getBytes());
       db.put("key3".getBytes(), "value3".getBytes());
@@ -34,8 +35,8 @@ public class SecondaryDBTest {
       // open secondary
       try (final Options secondaryOptions = new Options();
            final RocksDB secondaryDb =
-               RocksDB.openAsSecondary(secondaryOptions, dbFolder.getRoot().getAbsolutePath(),
-                   secondaryDbFolder.getRoot().getAbsolutePath())) {
+               RocksDB.openAsSecondary(secondaryOptions, dbFolder.getAbsolutePath(),
+                   secondaryDbFolder.getAbsolutePath())) {
         assertThat(secondaryDb.get("key1".getBytes())).isEqualTo("value1".getBytes());
         assertThat(secondaryDb.get("key2".getBytes())).isEqualTo("value2".getBytes());
         assertThat(secondaryDb.get("key3".getBytes())).isEqualTo("value3".getBytes());
@@ -72,7 +73,7 @@ public class SecondaryDBTest {
       try (final DBOptions options =
                new DBOptions().setCreateIfMissing(true).setCreateMissingColumnFamilies(true);
            final RocksDB db = RocksDB.open(
-               options, dbFolder.getRoot().getAbsolutePath(), cfDescriptors, cfHandles)) {
+               options, dbFolder.getAbsolutePath(), cfDescriptors, cfHandles)) {
         try {
           final ColumnFamilyHandle cf1 = cfHandles.get(1);
 
@@ -85,8 +86,8 @@ public class SecondaryDBTest {
           // open secondary
           try (final DBOptions secondaryOptions = new DBOptions();
                final RocksDB secondaryDb =
-                   RocksDB.openAsSecondary(secondaryOptions, dbFolder.getRoot().getAbsolutePath(),
-                       secondaryDbFolder.getRoot().getAbsolutePath(), cfDescriptors,
+                   RocksDB.openAsSecondary(secondaryOptions, dbFolder.getAbsolutePath(),
+                       secondaryDbFolder.getAbsolutePath(), cfDescriptors,
                        secondaryCfHandles)) {
             try {
               final ColumnFamilyHandle secondaryCf1 = secondaryCfHandles.get(1);

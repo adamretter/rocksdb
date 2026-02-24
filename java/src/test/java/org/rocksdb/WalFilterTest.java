@@ -5,10 +5,11 @@
 
 package org.rocksdb;
 
-import org.junit.ClassRule;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
+import java.io.File;
+
+import org.junit.jupiter.api.extension.RegisterExtension;
+import org.junit.jupiter.api.io.TempDir;
+import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -21,12 +22,12 @@ import static org.rocksdb.util.TestUtil.*;
 
 public class WalFilterTest {
 
-  @ClassRule
+  @RegisterExtension
   public static final RocksNativeLibraryResource ROCKS_NATIVE_LIBRARY_RESOURCE =
       new RocksNativeLibraryResource();
 
-  @Rule
-  public TemporaryFolder dbFolder = new TemporaryFolder();
+  @TempDir
+  public File dbFolder;
 
   @Test
   public void walFilter() throws RocksDBException {
@@ -59,7 +60,7 @@ public class WalFilterTest {
            final DBOptions dbOptions = new DBOptions(options)
                .setCreateMissingColumnFamilies(true);
            final RocksDB db = RocksDB.open(dbOptions,
-               dbFolder.getRoot().getAbsolutePath(),
+               dbFolder.getAbsolutePath(),
                 cfDescriptors, cfHandles)) {
         try (final WriteOptions writeOptions = new WriteOptions()) {
           // Write given keys in given batches
@@ -89,7 +90,7 @@ public class WalFilterTest {
                 .setWalFilter(walFilter)) {
 
           try (final RocksDB db = RocksDB.open(dbOptions,
-              dbFolder.getRoot().getAbsolutePath(),
+              dbFolder.getAbsolutePath(),
               cfDescriptors, cfHandles)) {
 
             try {

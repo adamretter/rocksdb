@@ -11,25 +11,22 @@ import static org.rocksdb.MergeTest.longToByteArray;
 
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
-import java.util.List;
-import org.junit.ClassRule;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
+import org.junit.jupiter.api.extension.RegisterExtension;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
+import java.util.stream.Stream;
+import org.junit.jupiter.api.io.TempDir;
+import java.io.File;
 
-@RunWith(Parameterized.class)
 public class MergeVariantsTest {
+
   @FunctionalInterface
   interface FunctionMerge<PDatabase, PLeft, PRight> {
-    public void apply(PDatabase db, PLeft two, PRight three) throws RocksDBException;
+    void apply(PDatabase db, PLeft two, PRight three) throws RocksDBException;
   }
 
-  @Parameterized.Parameters
-  public static List<MergeVariantsTest.FunctionMerge<RocksDB, byte[], byte[]>> data() {
-    return Arrays.asList(RocksDB::merge,
+  static Stream<MergeVariantsTest.FunctionMerge<RocksDB, byte[], byte[]>> parameters() {
+    return Stream.of(RocksDB::merge,
         (db, left, right)
             -> db.merge(new WriteOptions(), left, right),
         (db, left, right)
@@ -65,21 +62,20 @@ public class MergeVariantsTest {
         });
   }
 
-  @Parameterized.Parameter
-  public MergeVariantsTest.FunctionMerge<RocksDB, byte[], byte[]> mergeFunction;
-
-  @ClassRule
+  @RegisterExtension
   public static final RocksNativeLibraryResource ROCKS_NATIVE_LIBRARY_RESOURCE =
       new RocksNativeLibraryResource();
 
-  @Rule public TemporaryFolder dbFolder = new TemporaryFolder();
+  @TempDir
+  File dbFolder;
 
-  @Test
-  public void uint64AddOperatorOption() throws InterruptedException, RocksDBException {
+  @ParameterizedTest
+  @MethodSource("parameters")
+  public void uint64AddOperatorOption(final MergeVariantsTest.FunctionMerge<RocksDB, byte[], byte[]> mergeFunction) throws RocksDBException {
     try (final UInt64AddOperator uint64AddOperator = new UInt64AddOperator();
          final Options opt =
              new Options().setCreateIfMissing(true).setMergeOperator(uint64AddOperator);
-         final RocksDB db = RocksDB.open(opt, dbFolder.getRoot().getAbsolutePath())) {
+         final RocksDB db = RocksDB.open(opt, dbFolder.getAbsolutePath())) {
       // Writing (long)100 under key
       db.put("key".getBytes(), longToByteArray(100));
 

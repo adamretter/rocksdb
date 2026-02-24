@@ -8,6 +8,8 @@
 // found in the LICENSE file. See the AUTHORS file for names of contributors.
 package org.rocksdb;
 
+import java.io.File;
+
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.rocksdb.util.CapturingWriteBatchHandler.Action.DELETE;
@@ -19,25 +21,25 @@ import static org.rocksdb.util.CapturingWriteBatchHandler.Action.SINGLE_DELETE;
 
 import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
-import org.junit.ClassRule;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
+import org.junit.jupiter.api.extension.RegisterExtension;
+import org.junit.jupiter.api.io.TempDir;
+import org.junit.jupiter.api.Test;
 import org.rocksdb.util.CapturingWriteBatchHandler;
 import org.rocksdb.util.CapturingWriteBatchHandler.Event;
 import org.rocksdb.util.WriteBatchGetter;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 /**
  * This class mimics the db/write_batch_test.cc
  * in the c++ rocksdb library.
  */
 public class WriteBatchTest {
-  @ClassRule
+  @RegisterExtension
   public static final RocksNativeLibraryResource ROCKS_NATIVE_LIBRARY_RESOURCE =
       new RocksNativeLibraryResource();
 
-  @Rule
-  public TemporaryFolder dbFolder = new TemporaryFolder();
+  @TempDir
+  public File dbFolder;
 
   @Test
   public void emptyWriteBatch() {
@@ -218,7 +220,7 @@ public class WriteBatchTest {
 
   @Test
   public void deleteRange() throws RocksDBException {
-    try (final RocksDB db = RocksDB.open(dbFolder.getRoot().getAbsolutePath());
+    try (final RocksDB db = RocksDB.open(dbFolder.getAbsolutePath());
          final WriteBatch batch = new WriteBatch();
          final WriteOptions wOpt = new WriteOptions()) {
       db.put("key1".getBytes(), "value".getBytes());
@@ -264,23 +266,27 @@ public class WriteBatchTest {
     }
   }
 
-  @Test(expected = RocksDBException.class)
+  @Test
   public void restorePoints_withoutSavePoints() throws RocksDBException {
-    try (final WriteBatch batch = new WriteBatch()) {
-      batch.rollbackToSavePoint();
-    }
+    assertThrows(RocksDBException.class, () -> {
+        try (final WriteBatch batch = new WriteBatch()) {
+          batch.rollbackToSavePoint();
+        }
+    });
   }
 
-  @Test(expected = RocksDBException.class)
+  @Test
   public void restorePoints_withoutSavePoints_nested() throws RocksDBException {
-    try (final WriteBatch batch = new WriteBatch()) {
+    assertThrows(RocksDBException.class, () -> {
+        try (final WriteBatch batch = new WriteBatch()) {
 
-      batch.setSavePoint();
-      batch.rollbackToSavePoint();
+          batch.setSavePoint();
+          batch.rollbackToSavePoint();
 
-      // without previous corresponding setSavePoint
-      batch.rollbackToSavePoint();
-    }
+          // without previous corresponding setSavePoint
+          batch.rollbackToSavePoint();
+        }
+    });
   }
 
   @Test
@@ -311,23 +317,27 @@ public class WriteBatchTest {
     }
   }
 
-  @Test(expected = RocksDBException.class)
+  @Test
   public void popSavePoint_withoutSavePoints() throws RocksDBException {
-    try (final WriteBatch batch = new WriteBatch()) {
-      batch.popSavePoint();
-    }
+    assertThrows(RocksDBException.class, () -> {
+        try (final WriteBatch batch = new WriteBatch()) {
+          batch.popSavePoint();
+        }
+    });
   }
 
-  @Test(expected = RocksDBException.class)
+  @Test
   public void popSavePoint_withoutSavePoints_nested() throws RocksDBException {
-    try (final WriteBatch batch = new WriteBatch()) {
+    assertThrows(RocksDBException.class, () -> {
+        try (final WriteBatch batch = new WriteBatch()) {
 
-      batch.setSavePoint();
-      batch.popSavePoint();
+          batch.setSavePoint();
+          batch.popSavePoint();
 
-      // without previous corresponding setSavePoint
-      batch.popSavePoint();
-    }
+          // without previous corresponding setSavePoint
+          batch.popSavePoint();
+        }
+    });
   }
 
   @Test
@@ -339,13 +349,15 @@ public class WriteBatchTest {
     }
   }
 
-  @Test(expected = RocksDBException.class)
+  @Test
   public void maxBytes_over() throws RocksDBException {
-    try (final WriteBatch batch = new WriteBatch()) {
-      batch.setMaxBytes(1);
+    assertThrows(RocksDBException.class, () -> {
+        try (final WriteBatch batch = new WriteBatch()) {
+          batch.setMaxBytes(1);
 
-      batch.put("k1".getBytes(), "v1".getBytes());
-    }
+          batch.put("k1".getBytes(), "v1".getBytes());
+        }
+    });
   }
 
   @Test

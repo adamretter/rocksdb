@@ -137,6 +137,12 @@ jobjectArray Java_org_rocksdb_Env_getThreadList(JNIEnv* env, jclass,
 
   // object[]
   const jsize len = static_cast<jsize>(thread_status.size());
+  if (env->EnsureLocalCapacity((len * 2) + 1) != JNI_OK) {
+    // out of memory
+    env->ExceptionClear();
+    ROCKSDB_NAMESPACE::RocksDBExceptionJni::ThrowNew(env, "Insufficient JNI local references for thread list");
+    return nullptr;
+  }
   jobjectArray jthread_status = env->NewObjectArray(
       len, ROCKSDB_NAMESPACE::ThreadStatusJni::getJClass(env), nullptr);
   if (jthread_status == nullptr) {

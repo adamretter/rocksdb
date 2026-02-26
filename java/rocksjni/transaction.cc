@@ -673,7 +673,7 @@ void txn_write_kv_parts_helper(JNIEnv* env,
   // in order to avoid the local reference limit.
   // The user needs to be a aware that there is a limit to the number of parts
   // which can be gathered.
-  if (env->EnsureLocalCapacity(jkey_parts_len + jvalue_parts_len) != 0) {
+  if (env->EnsureLocalCapacity(jkey_parts_len + jvalue_parts_len) != JNI_OK) {
     // no space for all the jobjects we store up
     env->ExceptionClear();
     ROCKSDB_NAMESPACE::RocksDBExceptionJni::ThrowNew(

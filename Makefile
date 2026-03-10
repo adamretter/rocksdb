@@ -1075,10 +1075,15 @@ suggest-slow-tests:
 
 # "make check" uses
 # Run with "make J=1 check" to disable parallelism in "make check".
-# Run with "make J=200% check" to run two parallel jobs per core.
-# The default is to run one job per core (J=100%).
+# Run with "make J=$(shell expr $(NPROC) * 2) check" to run two parallel jobs per core.
+# The default is to run one job per core except to leave one core free (J=$(shell expr $(NPROC) - 1)).
 # See "man parallel" for its "-j ..." option.
-J ?= 100%
+ifeq ($(PLATFORM),OS_MACOSX)
+	NPROC ?= $(shell sysctl -n hw.logicalcpu)
+else
+	NPROC ?= $(shell nproc)
+endif
+J ?= $(shell expr $(NPROC) - 1)
 
 # Use this regexp to select the subset of tests whose names match.
 tests-regexp = .

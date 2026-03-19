@@ -540,6 +540,9 @@ elseif(CMAKE_SYSTEM_NAME MATCHES "Windows")
   add_definitions(-DWIN32 -DOS_WIN -D_MBCS -DWIN64 -DNOMINMAX)
   if(MINGW)
     add_definitions(-D_WIN32_WINNT=_WIN32_WINNT_VISTA)
+  else()
+    # Fix an issue with VS 2022 compatibility - see: https://github.com/facebook/rocksdb/issues/14468
+    add_definitions(-D_DISABLE_CONSTEXPR_MUTEX_CONSTRUCTOR)
   endif()
 endif()
 

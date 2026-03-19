@@ -12,9 +12,15 @@ import static java.nio.charset.StandardCharsets.UTF_8;
  * varying isolation guarantees
  */
 public class TransactionSample {
-  private static final String dbPath = "/tmp/rocksdb_transaction_example";
 
   public static final void main(final String args[]) throws RocksDBException {
+
+    if (args.length < 1) {
+      System.out.println("Usage: TransactionSample <db_path>");
+      System.exit(-1);
+    }
+
+    final String dbPath = args[0];
 
     try(final Options options = new Options()
         .setCreateIfMissing(true);
@@ -179,5 +185,7 @@ public class TransactionSample {
       // Clear snapshot from read options since it is no longer valid
       readOptions.setSnapshot(null);
     }
+
+    System.out.println("Done.");
   }
 }

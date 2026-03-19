@@ -16,15 +16,15 @@ public class RocksDBColumnFamilySample {
   public static void main(final String[] args) throws RocksDBException {
     if (args.length < 1) {
       System.out.println(
-          "usage: RocksDBColumnFamilySample db_path");
+          "Usage: RocksDBColumnFamilySample <db_path>");
       System.exit(-1);
     }
 
-    final String db_path = args[0];
+    final String dbPath = args[0];
 
     System.out.println("RocksDBColumnFamilySample");
     try(final Options options = new Options().setCreateIfMissing(true);
-        final RocksDB db = RocksDB.open(options, db_path)) {
+        final RocksDB db = RocksDB.open(options, dbPath)) {
 
       assert(db != null);
 
@@ -39,15 +39,17 @@ public class RocksDBColumnFamilySample {
     // open DB with two column families
     final List<ColumnFamilyDescriptor> columnFamilyDescriptors =
         new ArrayList<>();
+
     // have to open default column family
     columnFamilyDescriptors.add(new ColumnFamilyDescriptor(
         RocksDB.DEFAULT_COLUMN_FAMILY, new ColumnFamilyOptions()));
     // open the new one, too
     columnFamilyDescriptors.add(new ColumnFamilyDescriptor(
         "new_cf".getBytes(), new ColumnFamilyOptions()));
+
     final List<ColumnFamilyHandle> columnFamilyHandles = new ArrayList<>();
     try(final DBOptions options = new DBOptions();
-        final RocksDB db = RocksDB.open(options, db_path,
+        final RocksDB db = RocksDB.open(options, dbPath,
             columnFamilyDescriptors, columnFamilyHandles)) {
       assert(db != null);
 
@@ -74,5 +76,7 @@ public class RocksDBColumnFamilySample {
         }
       }
     }
+
+    System.out.println("Done.");
   }
 }

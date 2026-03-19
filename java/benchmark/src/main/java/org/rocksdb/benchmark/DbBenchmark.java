@@ -247,15 +247,15 @@ public class DbBenchmark {
           }
         } else {
           for (long i = 0; i < numEntries_; i += entriesPerBatch_) {
-            WriteBatch batch = new WriteBatch();
-            for (long j = 0; j < entriesPerBatch_; j++) {
-              getKey(key, i + j, keyRange_);
-              DbBenchmark.this.gen_.generate(value);
-              batch.put(key, value);
-              stats_.finishedSingleOp(keySize_ + valueSize_);
+            try (final WriteBatch batch = new WriteBatch()) {
+              for (long j = 0; j < entriesPerBatch_; j++) {
+                getKey(key, i + j, keyRange_);
+                DbBenchmark.this.gen_.generate(value);
+                batch.put(key, value);
+                stats_.finishedSingleOp(keySize_ + valueSize_);
+              }
+              db_.write(writeOpt_, batch);
             }
-            db_.write(writeOpt_, batch);
-            batch.dispose();
             writeRateControl(i);
             if (isFinished()) {
               return;
@@ -415,19 +415,18 @@ public class DbBenchmark {
       super(tid, randSeed, numEntries, keyRange);
     }
     @Override public void runTask() throws RocksDBException {
-      RocksIterator iter = db_.newIterator();
-      long i;
-      for (iter.seekToFirst(), i = 0;
-           iter.isValid() && i < numEntries_;
-           iter.next(), ++i) {
-        stats_.found_++;
-        stats_.finishedSingleOp(iter.key().length + iter.value().length);
-        if (isFinished()) {
-          iter.dispose();
-          return;
+      try (final RocksIterator iter = db_.newIterator()) {
+        long i;
+        for (iter.seekToFirst(),i=0;
+            iter.isValid() &&i < numEntries_;
+        iter.next(), ++i){
+          stats_.found_++;
+          stats_.finishedSingleOp(iter.key().length + iter.value().length);
+          if (isFinished()) {
+            return;
+          }
         }
       }
-      iter.dispose();
     }
   }
 
@@ -476,17 +475,19 @@ public class DbBenchmark {
     gen_ = new RandomGenerator(randSeed_, compressionRatio_);
   }
 
-  private void prepareReadOptions(ReadOptions options) {
+  private ReadOptions prepareReadOptions(final ReadOptions options) {
     options.setVerifyChecksums((Boolean)flags_.get(Flag.verify_checksum));
     options.setTailing((Boolean)flags_.get(Flag.use_tailing_iterator));
+    return options;
   }
 
-  private void prepareWriteOptions(WriteOptions options) {
+  private WriteOptions prepareWriteOptions(final WriteOptions options) {
     options.setSync((Boolean)flags_.get(Flag.sync));
     options.setDisableWAL((Boolean)flags_.get(Flag.disable_wal));
+    return options;
   }
 
-  private void prepareOptions(Options options) throws RocksDBException {
+  private Options prepareOptions(final Options options) throws RocksDBException {
     if (!useExisting_) {
       options.setCreateIfMissing(true);
     } else {
@@ -615,127 +616,128 @@ public class DbBenchmark {
     // TODO(yhchiang): add RocksDB.openForReadOnly() to enable Flag.readonly
     // TODO(yhchiang): enable Flag.merge_operator by switch
     */
+
+    return options;
   }
 
   private void run() throws RocksDBException {
     if (!useExisting_) {
       destroyDb();
     }
-    Options options = new Options();
-    prepareOptions(options);
-    open(options);
 
-    printHeader(options);
+    try (final Options options = prepareOptions(new Options());
+         final RocksDB db = open(options)) {
 
-    for (String benchmark : benchmarks_) {
-      List<Callable<Stats>> tasks = new ArrayList<Callable<Stats>>();
-      List<Callable<Stats>> bgTasks = new ArrayList<Callable<Stats>>();
-      WriteOptions writeOpt = new WriteOptions();
-      prepareWriteOptions(writeOpt);
-      ReadOptions readOpt = new ReadOptions();
-      prepareReadOptions(readOpt);
-      int currentTaskId = 0;
-      boolean known = true;
+      this.db_ = db;
 
-      switch (benchmark) {
-        case "fillseq":
-          tasks.add(new WriteSequentialTask(
-              currentTaskId++, randSeed_, num_, num_, writeOpt, 1));
-          break;
-        case "fillbatch":
-          tasks.add(
-              new WriteSequentialTask(currentTaskId++, randSeed_, num_, num_, writeOpt, 1000));
-          break;
-        case "fillrandom":
-          tasks.add(new WriteRandomTask(
-              currentTaskId++, randSeed_, num_, num_, writeOpt, 1));
-          break;
-        case "filluniquerandom":
-          tasks.add(new WriteUniqueRandomTask(
-              currentTaskId++, randSeed_, num_, num_, writeOpt, 1));
-          break;
-        case "fillsync":
-          writeOpt.setSync(true);
-          tasks.add(new WriteRandomTask(
-              currentTaskId++, randSeed_, num_ / 1000, num_ / 1000,
-              writeOpt, 1));
-          break;
-        case "readseq":
-          for (int t = 0; t < threadNum_; ++t) {
-            tasks.add(new ReadSequentialTask(
-                currentTaskId++, randSeed_, reads_ / threadNum_, num_));
-          }
-          break;
-        case "readrandom":
-          for (int t = 0; t < threadNum_; ++t) {
-            tasks.add(new ReadRandomTask(
-                currentTaskId++, randSeed_, reads_ / threadNum_, num_));
-          }
-          break;
-        case "readwhilewriting":
-          WriteTask writeTask = new WriteRandomTask(
-              -1, randSeed_, Long.MAX_VALUE, num_, writeOpt, 1, writesPerSeconds_);
-          writeTask.stats_.setExcludeFromMerge();
-          bgTasks.add(writeTask);
-          for (int t = 0; t < threadNum_; ++t) {
-            tasks.add(new ReadRandomTask(
-                currentTaskId++, randSeed_, reads_ / threadNum_, num_));
-          }
-          break;
-        case "readhot":
-          for (int t = 0; t < threadNum_; ++t) {
-            tasks.add(new ReadRandomTask(
-                currentTaskId++, randSeed_, reads_ / threadNum_, num_ / 100));
-          }
-          break;
-        case "delete":
-          destroyDb();
-          open(options);
-          break;
-        default:
-          known = false;
-          System.err.println("Unknown benchmark: " + benchmark);
-          break;
-      }
-      if (known) {
-        ExecutorService executor = Executors.newCachedThreadPool();
-        ExecutorService bgExecutor = Executors.newCachedThreadPool();
-        try {
-          // measure only the main executor time
-          List<Future<Stats>> bgResults = new ArrayList<Future<Stats>>();
-          for (Callable bgTask : bgTasks) {
-            bgResults.add(bgExecutor.submit(bgTask));
-          }
-          start();
-          List<Future<Stats>> results = executor.invokeAll(tasks);
-          executor.shutdown();
-          boolean finished = executor.awaitTermination(10, TimeUnit.SECONDS);
-          if (!finished) {
-            System.out.format(
-                "Benchmark %s was not finished before timeout.",
-                benchmark);
-            executor.shutdownNow();
-          }
-          setFinished(true);
-          bgExecutor.shutdown();
-          finished = bgExecutor.awaitTermination(10, TimeUnit.SECONDS);
-          if (!finished) {
-            System.out.format(
-                "Benchmark %s was not finished before timeout.",
-                benchmark);
-            bgExecutor.shutdownNow();
-          }
+      printHeader(options);
 
-          stop(benchmark, results, currentTaskId);
-        } catch (InterruptedException e) {
-          System.err.println(e);
+      for (String benchmark : benchmarks_) {
+        List<Callable<Stats>> tasks = new ArrayList<>();
+        List<Callable<Stats>> bgTasks = new ArrayList<>();
+
+        try (final WriteOptions writeOpt = prepareWriteOptions(new WriteOptions());
+             final ReadOptions readOpt = prepareReadOptions(new ReadOptions())) {
+          int currentTaskId = 0;
+          boolean known = true;
+
+          switch (benchmark) {
+            case "fillseq":
+              tasks.add(new WriteSequentialTask(
+                  currentTaskId++, randSeed_, num_, num_, writeOpt, 1));
+              break;
+            case "fillbatch":
+              tasks.add(
+                  new WriteSequentialTask(currentTaskId++, randSeed_, num_, num_, writeOpt, 1000));
+              break;
+            case "fillrandom":
+              tasks.add(new WriteRandomTask(
+                  currentTaskId++, randSeed_, num_, num_, writeOpt, 1));
+              break;
+            case "filluniquerandom":
+              tasks.add(new WriteUniqueRandomTask(
+                  currentTaskId++, randSeed_, num_, num_, writeOpt, 1));
+              break;
+            case "fillsync":
+              writeOpt.setSync(true);
+              tasks.add(new WriteRandomTask(
+                  currentTaskId++, randSeed_, num_ / 1000, num_ / 1000,
+                  writeOpt, 1));
+              break;
+            case "readseq":
+              for (int t = 0; t < threadNum_; ++t) {
+                tasks.add(new ReadSequentialTask(
+                    currentTaskId++, randSeed_, reads_ / threadNum_, num_));
+              }
+              break;
+            case "readrandom":
+              for (int t = 0; t < threadNum_; ++t) {
+                tasks.add(new ReadRandomTask(
+                    currentTaskId++, randSeed_, reads_ / threadNum_, num_));
+              }
+              break;
+            case "readwhilewriting":
+              WriteTask writeTask = new WriteRandomTask(
+                  -1, randSeed_, Long.MAX_VALUE, num_, writeOpt, 1, writesPerSeconds_);
+              writeTask.stats_.setExcludeFromMerge();
+              bgTasks.add(writeTask);
+              for (int t = 0; t < threadNum_; ++t) {
+                tasks.add(new ReadRandomTask(
+                    currentTaskId++, randSeed_, reads_ / threadNum_, num_));
+              }
+              break;
+            case "readhot":
+              for (int t = 0; t < threadNum_; ++t) {
+                tasks.add(new ReadRandomTask(
+                    currentTaskId++, randSeed_, reads_ / threadNum_, num_ / 100));
+              }
+              break;
+            case "delete":
+              destroyDb();
+              open(options);
+              break;
+            default:
+              known = false;
+              System.err.println("Unknown benchmark: " + benchmark);
+              break;
+          }
+          if (known) {
+            ExecutorService executor = Executors.newCachedThreadPool();
+            ExecutorService bgExecutor = Executors.newCachedThreadPool();
+            try {
+              // measure only the main executor time
+              List<Future<Stats>> bgResults = new ArrayList<Future<Stats>>();
+              for (Callable bgTask : bgTasks) {
+                bgResults.add(bgExecutor.submit(bgTask));
+              }
+              start();
+              List<Future<Stats>> results = executor.invokeAll(tasks);
+              executor.shutdown();
+              boolean finished = executor.awaitTermination(10, TimeUnit.SECONDS);
+              if (!finished) {
+                System.out.format(
+                    "Benchmark %s was not finished before timeout.",
+                    benchmark);
+                executor.shutdownNow();
+              }
+              setFinished(true);
+              bgExecutor.shutdown();
+              finished = bgExecutor.awaitTermination(10, TimeUnit.SECONDS);
+              if (!finished) {
+                System.out.format(
+                    "Benchmark %s was not finished before timeout.",
+                    benchmark);
+                bgExecutor.shutdownNow();
+              }
+
+              stop(benchmark, results, currentTaskId);
+            } catch (InterruptedException e) {
+              System.err.println(e);
+            }
+          }
         }
       }
-      writeOpt.dispose();
-      readOpt.dispose();
     }
-    options.dispose();
-    db_.close();
   }
 
   private void printHeader(Options options) {
@@ -765,9 +767,9 @@ public class DbBenchmark {
     }
   }
 
-  private void open(Options options) throws RocksDBException {
+  private RocksDB open(Options options) throws RocksDBException {
     System.out.println("Using database directory: " + databaseDir_);
-    db_ = RocksDB.open(options, databaseDir_);
+    return RocksDB.open(options, databaseDir_);
   }
 
   private void start() {

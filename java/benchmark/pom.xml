@@ -68,23 +68,54 @@
         <dependency>
             <groupId>org.rocksdb</groupId>
             <artifactId>rocksdbjni</artifactId>
+
             <!-- TODO(AR) make sure this is set to the latest version you want to benchmark -->
-            <version>10.4.2</version>
+            <version>10.5.1</version>
+
         </dependency>
     </dependencies>
 
     <build>
         <plugins>
             <plugin>
-                    <groupId>org.apache.maven.plugins</groupId>
-                    <artifactId>maven-compiler-plugin</artifactId>
-                    <version>3.15.0</version>
-                    <configuration>
-                        <source>${project.build.source}</source>
-                        <target>${project.build.target}</target>
-                        <encoding>${project.build.sourceEncoding}</encoding>
-                    </configuration>
-                </plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.15.0</version>
+                <configuration>
+                    <source>${project.build.source}</source>
+                    <target>${project.build.target}</target>
+                    <encoding>${project.build.sourceEncoding}</encoding>
+                </configuration>
+            </plugin>
+
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>appassembler-maven-plugin</artifactId>
+                <version>2.1.0</version>
+                <executions>
+                    <execution>
+                        <id>appassembler</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>assemble</goal>
+                        </goals>
+                        <configuration>
+                            <repositoryLayout>flat</repositoryLayout>
+                            <repositoryName>lib</repositoryName>
+                            <binFileExtensions>
+                                <unix>.sh</unix>
+                            </binFileExtensions>
+                            <assembleDirectory>${project.build.directory}${file.separator}${project.artifactId}-${project.version}-dir</assembleDirectory>
+                            <programs>
+                                <program>
+                                    <id>benchmark</id>
+                                    <mainClass>org.rocksdb.benchmark.DbBenchmark</mainClass>
+                                </program>
+                            </programs>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
         </plugins>
     </build>
 

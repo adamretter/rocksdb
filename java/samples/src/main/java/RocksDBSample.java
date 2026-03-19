@@ -19,7 +19,7 @@ public class RocksDBSample {
 
   public static void main(final String[] args) {
     if (args.length < 1) {
-      System.out.println("usage: RocksDBSample db_path");
+      System.out.println("Usage: RocksDBSample <db_path>");
       System.exit(-1);
     }
 
@@ -282,14 +282,18 @@ public class RocksDBSample {
           assert (value1 != null);
         }
 
-        values = db.multiGetAsList(new ReadOptions(), keys);
-        assert (values.size() == keys.size());
-        for (final byte[] value1 : values) {
-          assert (value1 != null);
+        try (final ReadOptions readOptions1 = new ReadOptions()) {
+          values = db.multiGetAsList(readOptions1, keys);
+          assert (values.size() == keys.size());
+          for (final byte[] value1 : values) {
+            assert (value1 != null);
+          }
         }
       } catch (final RocksDBException e) {
         System.err.println(e);
       }
     }
+
+    System.out.println("Done.");
   }
 }

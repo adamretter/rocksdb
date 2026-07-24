@@ -2607,14 +2607,22 @@ zlib-$(ZLIB_VER).tar.gz:
 		echo zlib-$(ZLIB_VER).tar.gz checksum mismatch, expected=\"$(ZLIB_SHA256)\" actual=\"$$ZLIB_SHA256_ACTUAL\"; \
 		exit 1; \
 	fi
+ifeq ($(MACHINE),s390x)
+ifneq ($(PORTABLE),0)
+EXTRA_ZLIB_CONFIG_FLAGS = --disable-crcvx
+endif
+endif
 
 libz.a: zlib-$(ZLIB_VER).tar.gz
 	-rm -rf zlib-$(ZLIB_VER)
 	tar xvzf zlib-$(ZLIB_VER).tar.gz
+ifneq ($(PORTABLE),0)
+	rm -rf zlib-$(ZLIB_VER)/contrib/crc32vx
+endif
 	if [ -n"$(ARCHFLAG)" ]; then \
-		cd zlib-$(ZLIB_VER) && CFLAGS='-fPIC ${JAVA_STATIC_DEPS_CCFLAGS} ${EXTRA_CFLAGS}' LDFLAGS='${JAVA_STATIC_DEPS_LDFLAGS} ${EXTRA_LDFLAGS}' ./configure --static --archs="$(ARCHFLAG)" && $(MAKE);  \
+		cd zlib-$(ZLIB_VER) && CFLAGS='-fPIC ${JAVA_STATIC_DEPS_CCFLAGS} ${EXTRA_CFLAGS}' LDFLAGS='${JAVA_STATIC_DEPS_LDFLAGS} ${EXTRA_LDFLAGS}' ./configure --static --archs="$(ARCHFLAG)" $(EXTRA_ZLIB_CONFIG_FLAGS) && $(MAKE);  \
 	else \
-		cd zlib-$(ZLIB_VER) && CFLAGS='-fPIC ${JAVA_STATIC_DEPS_CCFLAGS} ${EXTRA_CFLAGS}' LDFLAGS='${JAVA_STATIC_DEPS_LDFLAGS} ${EXTRA_LDFLAGS}' ./configure --static && $(MAKE);  \
+		cd zlib-$(ZLIB_VER) && CFLAGS='-fPIC ${JAVA_STATIC_DEPS_CCFLAGS} ${EXTRA_CFLAGS}' LDFLAGS='${JAVA_STATIC_DEPS_LDFLAGS} ${EXTRA_LDFLAGS}' ./configure --static $(EXTRA_ZLIB_CONFIG_FLAGS) && $(MAKE);  \
 	fi
 	cp zlib-$(ZLIB_VER)/libz.a .
 

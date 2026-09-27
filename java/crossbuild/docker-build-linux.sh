@@ -20,7 +20,9 @@ pushd /rocksdb-local-build
 DEVTOOLSET=""
 if hash scl 2>/dev/null; then
   # Check for devtoolsets in order of preference (newer first)
-  if scl --list | grep -q 'devtoolset-12'; then
+  if scl --list | grep -q 'gcc-toolset-12'; then
+    DEVTOOLSET="gcc-toolset-12"
+  elif scl --list | grep -q 'devtoolset-12'; then
     DEVTOOLSET="devtoolset-12"
   elif scl --list | grep -q 'devtoolset-11'; then
     DEVTOOLSET="devtoolset-11"

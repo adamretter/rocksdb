@@ -2760,7 +2760,7 @@ rocksdbjavastaticreleasedocker: rocksdbjavastaticosx rocksdbjavastaticdockerx86 
 	cd java; $(MAVEN_CMD) -DskipTests -Dpmd.failOnViolation=false -Dcpd.failOnViolation=false -Drelease.all package
 
 rocksdbjavastaticdockerx86: rocksdbjavanativedir
-	docker run --rm --name rocksdb_linux_x86-be --platform linux/386 --attach stdin --attach stdout --attach stderr --volume $(HOME)/.m2:/root/.m2 --volume `pwd`:/rocksdb-host:ro --volume /rocksdb-local-build --volume `pwd`/$(JAVA_NATIVE_DIR):/rocksdb-java-target --env DEBUG_LEVEL=$(DEBUG_LEVEL) --env J=$(J) evolvedbinary/rocksjava:almalinux8_x86-be /rocksdb-host/java/crossbuild/docker-build-linux.sh
+	docker run --rm --name rocksdb_linux_x86-be --platform linux/386 --attach stdin --attach stdout --attach stderr --volume $(HOME)/.m2:/root/.m2 --volume `pwd`:/rocksdb-host:ro --volume /rocksdb-local-build --volume `pwd`/$(JAVA_NATIVE_DIR):/rocksdb-java-target --env DEBUG_LEVEL=$(DEBUG_LEVEL) --env J=$(J) evolvedbinary/rocksjava:almalinux8_x86-be /rocksdb-host/java/crossbuild/docker-build-linux.sh --linux32
 
 rocksdbjavastaticdockerx86_64: rocksdbjavanativedir
 	docker run --rm --name rocksdb_linux_x64-be --platform linux/amd64 --attach stdin --attach stdout --attach stderr --volume $(HOME)/.m2:/root/.m2 --volume `pwd`:/rocksdb-host:ro --volume /rocksdb-local-build --volume `pwd`/$(JAVA_NATIVE_DIR):/rocksdb-java-target --env DEBUG_LEVEL=$(DEBUG_LEVEL) --env J=$(J) evolvedbinary/rocksjava:almalinux8_x64-be /rocksdb-host/java/crossbuild/docker-build-linux.sh
@@ -2778,7 +2778,7 @@ rocksdbjavastaticdockerriscv64: rocksdbjavanativedir
 	docker run --rm --name rocksdb_linux_riscv64-be --platform linux/riscv64 --attach stdin --attach stdout --attach stderr --volume $(HOME)/.m2:/root/.m2 --volume `pwd`:/rocksdb-host:ro --volume /rocksdb-local-build --volume `pwd`/$(JAVA_NATIVE_DIR):/rocksdb-java-target --env DEBUG_LEVEL=$(DEBUG_LEVEL) --env J=$(J) evolvedbinary/rocksjava:ubuntu20_riscv64-be /rocksdb-host/java/crossbuild/docker-build-linux.sh
 
 rocksdbjavastaticdockerx86musl: rocksdbjavanativedir
-	docker run --rm --name rocksdb_linux_x86-musl-be --platform linux/386 --attach stdin --attach stdout --attach stderr --volume $(HOME)/.m2:/root/.m2 --volume `pwd`:/rocksdb-host:ro --volume /rocksdb-local-build --volume `pwd`/$(JAVA_NATIVE_DIR):/rocksdb-java-target --env DEBUG_LEVEL=$(DEBUG_LEVEL) --env J=$(J) evolvedbinary/rocksjava:alpine3_x86-be /rocksdb-host/java/crossbuild/docker-build-linux.sh
+	docker run --rm --name rocksdb_linux_x86-musl-be --platform linux/386 --attach stdin --attach stdout --attach stderr --volume $(HOME)/.m2:/root/.m2 --volume `pwd`:/rocksdb-host:ro --volume /rocksdb-local-build --volume `pwd`/$(JAVA_NATIVE_DIR):/rocksdb-java-target --env DEBUG_LEVEL=$(DEBUG_LEVEL) --env J=$(J) evolvedbinary/rocksjava:alpine3_x86-be /rocksdb-host/java/crossbuild/docker-build-linux.sh --linux32
 
 rocksdbjavastaticdockerx86_64musl: rocksdbjavanativedir
 	docker run --rm --name rocksdb_linux_x64-musl-be --platform linux/amd64 --attach stdin --attach stdout --attach stderr --volume $(HOME)/.m2:/root/.m2 --volume `pwd`:/rocksdb-host:ro --volume /rocksdb-local-build --volume `pwd`/$(JAVA_NATIVE_DIR):/rocksdb-java-target --env DEBUG_LEVEL=$(DEBUG_LEVEL) --env J=$(J) evolvedbinary/rocksjava:alpine3_x64-be /rocksdb-host/java/crossbuild/docker-build-linux.sh

@@ -42,12 +42,24 @@ fi
 # Build with devtoolset if available, otherwise use system compiler
 if [ -n "$DEVTOOLSET" ]; then
   echo "Using $DEVTOOLSET"
-  scl enable $DEVTOOLSET "bash -c 'make clean-not-downloaded'"
-  scl enable $DEVTOOLSET "bash -c 'PORTABLE=1 J=$J make -j$J rocksdbjavastatic'"
+  if [[ " $* " =~ " --linux32 " ]]; then
+    echo "Building with linux32"
+    linux32 scl enable $DEVTOOLSET "bash -c 'make clean-not-downloaded'"
+    linux32 scl enable $DEVTOOLSET "bash -c 'PORTABLE=1 J=$J make -j$J rocksdbjavastatic'"
+  else
+    scl enable $DEVTOOLSET "bash -c 'make clean-not-downloaded'"
+    scl enable $DEVTOOLSET "bash -c 'PORTABLE=1 J=$J make -j$J rocksdbjavastatic'"
+  fi
 else
-  echo "No SCL devtoolset found, falling back to system compiler"
-  make clean-not-downloaded
-  PORTABLE=1 J=$J make -j$J rocksdbjavastatic
+  echo "No SCL toolset found, falling back to system compiler"
+  if [[ " $* " =~ " --linux32 " ]]; then
+    echo "Building with linux32"
+    linux32 make clean-not-downloaded
+    PORTABLE=1 J=$J linux32 make -j$J rocksdbjavastatic
+  else
+    make clean-not-downloaded
+    PORTABLE=1 J=$J make -j$J rocksdbjavastatic
+  fi
 fi
 
 cp java/target-native/librocksdbjni-linux*.so /rocksdb-java-target
